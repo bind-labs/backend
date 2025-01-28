@@ -1,5 +1,13 @@
 # Backend
 
+## Getting Started
+
+1. Run a local Postgres instance: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=bind -e POSTGRES_USER=bind -e POSTGRES_DB=bind --name bind-postgres -d postgres`
+2. Copy the `.env.example` file to `.env`
+3. Enter the nix shell: `nix develop`
+4. Run `cargo watch -x run`
+5. Run `psql -c "DELETE FROM _sqlx_migrations"` when you need to delete migrations
+
 ## Endpoints
 
 Prefixed under `/api/v1`
@@ -10,7 +18,7 @@ Prefixed under `/api/v1`
 
 - Index `/index`
   - ID can be derived from the parameters and then hashed for caching
-  - Two types: One shows the content as-is, the other builds it from the RSS history
+  - Two types: One shows the content as-is (simple interleave for now), the other builds it from the RSS history
   - `GET /:id` Gets the actual content of the feed
     - `GET /me` for home feed
   - `GET/PUT /` Lists or creates an index

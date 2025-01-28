@@ -1,26 +1,25 @@
+use std::time::Duration;
+
 use axum::Router;
 
+use clap::Parser;
+use config::Config;
+use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod db;
+mod config;
 mod feed;
 mod index;
 mod items;
-mod user;
 mod search;
+mod user;
 
 #[derive(Clone)]
 struct AppState {
     pub pool: sqlx::PgPool,
-}
-
-impl AppState {
-    async fn new() -> Result<Self, sqlx::Error> {
-        let pool = db::get_db_pool().await?;
-        Ok(Self { pool })
-    }
+    pub config: Config,
 }
 
 #[tokio::main]
@@ -40,7 +39,24 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let state = AppState::new().await.expect("Failed to create app state");
+    // This returns an error if the `.env` file doesn't exist, but that's not what we want
+    // since we're not going to use a `.env` file if we deploy this application
+    dotenv::dotenv().ok();
+    let config = Config::parse();
+
+    let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
+        .await
+        .expect("Failed to bind to port");
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+
+    let pool = PgPoolOptions::new()
+        .max_connections(50)
+        .acquire_timeout(Duration::from_secs(3))
+        .connect(&config.database_url)
+        .await
+        .expect("Failed to create db pool");
+    let state = AppState { pool, config };
+
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
         .with_state(state)
@@ -50,7 +66,5 @@ async fn main() {
         .merge(index::router())
         .merge(search::router());
 
-    let listener = TcpListener::bind("127.0.0.1:3000").await.unwrap();
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

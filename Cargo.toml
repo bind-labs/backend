@@ -10,6 +10,8 @@ axum-extra = { version = "0.10.0", features = [
   "query",
   "tracing",
 ] }
+clap = { version = "4.5.27", features = ["derive", "env"] }
+dotenv = "0.15.0"
 sqlx = { version = "0.8.3", features = [
   "runtime-tokio-rustls",
   "any",
