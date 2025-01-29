@@ -50,8 +50,8 @@ Prefixed under `/api/v1`
 ## Roadmap
 
 - [x] API Schema design
-- [ ] Axum template with SQLx
-- [ ] Postgres schema
+- [x] Axum template with SQLx
+- [x] Postgres schema
 - [ ] RSS parsing and caching
 - [ ] Website parsing
 - [ ] API Implementation
