@@ -60,12 +60,7 @@
             export PGDATABASE=bind
             export PGHOST=localhost
           '';
-          packages = with pkgs; [
-            rust-analyzer
-            sqlx-cli
-            cargo-watch
-            postgresql
-          ];
+          packages = with pkgs; [ sqlx-cli cargo-watch postgresql ];
         };
       });
 }

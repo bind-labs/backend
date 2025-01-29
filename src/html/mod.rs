@@ -20,7 +20,7 @@ pub fn get_feed_links(html: &str) -> Vec<FeedInformation> {
 
             Some(FeedInformation {
                 link: link.to_string(),
-                feed_type: feed_type,
+                feed_type,
             })
         })
         .collect()

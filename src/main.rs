@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use axum::Router;
 
-use clap::Parser;
 use backend::config::Config;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
@@ -45,6 +44,8 @@ async fn main() {
         .await
         .expect("Failed to create db pool");
 
+    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+
     let reqwest_client = reqwest::Client::new();
     let state = AppState {
         pool,
@@ -56,7 +57,6 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .nest("/feed", http::feed::router())
         .with_state(state);
-
 
     axum::serve(listener, app).await.unwrap();
 }
