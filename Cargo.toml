@@ -4,27 +4,24 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axum = "0.8.1"
-axum-extra = { version = "0.10.0", features = [
-  "typed-header",
-  "query",
-  "tracing",
-] }
-chrono = "0.4.39"
-clap = { version = "4.5.27", features = ["derive", "env"] }
-dotenv = "0.15.0"
-reqwest = "0.12.12"
-rss = "2.0.11"
-scraper = "0.22.0"
-serde = "1.0.217"
-sqlx = { version = "0.8.3", features = [
-  "runtime-tokio-rustls",
-  "any",
-  "postgres",
-] }
-thiserror = "2.0.11"
-tokio = { version = "1.43.0", features = ["full"] }
+tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread", "signal"] }
 tower-http = { version = "0.6.2", features = ["trace"] }
+axum = "0.8.1"
+axum-extra = { version = "0.10.0", features = ["typed-header", "query", "tracing"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 validator = { version = "0.20.0", features = ["derive"] } 
+
+clap = { version = "4.5.27", features = ["derive", "env"] }
+dotenv = "0.15.0"
+
+rustls = "0.23.21"
+reqwest = { version = "0.12.9" , default-features = false, features = ["json", "rustls-tls", "http2", "macos-system-configuration", "charset"] }
+rss = "2.0.11"
+scraper = "0.22.0"
+
+serde = "1.0.217"
+sqlx = { version = "0.8.3", features = ["runtime-tokio-rustls", "any", "postgres"] }
+
+thiserror = "2.0.11"
+chrono = "0.4.39"
