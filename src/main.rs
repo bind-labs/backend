@@ -3,24 +3,13 @@ use std::time::Duration;
 use axum::Router;
 
 use clap::Parser;
-use config::Config;
+use backend::config::Config;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod config;
-mod feed;
-mod index;
-mod items;
-mod search;
-mod user;
-
-#[derive(Clone)]
-struct AppState {
-    pub pool: sqlx::PgPool,
-    pub config: Config,
-}
+use backend::{http, AppState};
 
 #[tokio::main]
 async fn main() {
@@ -55,16 +44,19 @@ async fn main() {
         .connect(&config.database_url)
         .await
         .expect("Failed to create db pool");
-    let state = AppState { pool, config };
+
+    let reqwest_client = reqwest::Client::new();
+    let state = AppState {
+        pool,
+        config,
+        reqwest_client,
+    };
 
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
-        .with_state(state)
-        .merge(user::router())
-        .merge(items::router())
-        .merge(feed::router())
-        .merge(index::router())
-        .merge(search::router());
+        .nest("/feed", http::feed::router())
+        .with_state(state);
+
 
     axum::serve(listener, app).await.unwrap();
 }

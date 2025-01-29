@@ -10,14 +10,21 @@ axum-extra = { version = "0.10.0", features = [
   "query",
   "tracing",
 ] }
+chrono = "0.4.39"
 clap = { version = "4.5.27", features = ["derive", "env"] }
 dotenv = "0.15.0"
+reqwest = "0.12.12"
+rss = "2.0.11"
+scraper = "0.22.0"
+serde = "1.0.217"
 sqlx = { version = "0.8.3", features = [
   "runtime-tokio-rustls",
   "any",
   "postgres",
 ] }
+thiserror = "2.0.11"
 tokio = { version = "1.43.0", features = ["full"] }
 tower-http = { version = "0.6.2", features = ["trace"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+validator = { version = "0.20.0", features = ["derive"] } 
