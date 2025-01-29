@@ -239,6 +239,7 @@ dependencies = [
 name = "backend"
 version = "0.1.0"
 dependencies = [
+ "atom_syndication",
  "axum",
  "axum-extra",
  "chrono",

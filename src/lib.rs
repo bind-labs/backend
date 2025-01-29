@@ -1,6 +1,6 @@
 pub mod config;
 pub mod error;
-pub mod feed_parsers;
+pub mod feed;
 pub mod html;
 pub mod http;
 pub mod schema;
