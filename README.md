@@ -14,7 +14,7 @@ Prefixed under `/api/v1`
 
 - Feeds `/feed`
   - `GET/PUT /` Listing or creating feeds, not the content
-  - `GET/UPDATE/DELETE /:id`
+  - `GET /:id`
 
 - Index `/index`
   - ID can be derived from the parameters and then hashed for caching

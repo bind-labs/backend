@@ -9,7 +9,7 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use backend::{http, ApiContext};
+use backend::http::{self, common::ApiContext};
 
 #[tokio::main]
 async fn main() {

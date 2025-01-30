@@ -24,3 +24,12 @@ pub async fn discover_feeds(
 
     Ok(Json(discover_feed_links(&html_page)))
 }
+
+#[cfg(test)]
+mod test {
+    #[tokio::test]
+    async fn finds_hacker_news_rss() {}
+
+    #[tokio::test]
+    async fn follows_redirects() {}
+}

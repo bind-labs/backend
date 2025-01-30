@@ -1,7 +1,7 @@
 use core::fmt;
 use thiserror::Error;
 
-use crate::FeedItemEnclosure;
+use crate::sql::FeedItemEnclosure;
 
 pub struct ParsedFeed {
     pub link: String,

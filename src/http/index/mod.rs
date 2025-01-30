@@ -1,10 +1,11 @@
 use axum::routing::get;
 use axum::Router;
 
-use crate::ApiContext;
+use super::common::ApiContext;
 
-mod index;
+mod create;
+mod get;
 
 pub fn router() -> Router<ApiContext> {
-    Router::new().route("/index/:id", get(index::get_index))
+    Router::new().route("/index/:id", get(get::get_index).put(create::create_index))
 }

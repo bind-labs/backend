@@ -1,4 +1,4 @@
-use axum::routing::{delete, get, post, put};
+use axum::routing::{get, post};
 use axum::Router;
 
 use super::common::ApiContext;
