@@ -53,7 +53,12 @@ Prefixed under `/api/v1`
 - [x] Axum template with SQLx
 - [x] Postgres schema
 - [ ] RSS parsing and caching
-- [ ] JSON Feed support using Serde
+  - [ ] Support `Retry-After` header on 429
+  - [ ] Use `If-Modified-Since` header to get 304
+  - [ ] Use `ETag` header to get 304
+  - [ ] Should we look at `max-age`?
+  - [ ] Follow redirect and update link to the feed
+  - [ ] JSON Feed support using Serde
 - [ ] Website parsing
 - [ ] API Implementation
   - [ ] Feeds
