@@ -1,5 +1,11 @@
 use axum::Router;
+use axum::routing::get;
 
-pub fn router() -> Router {
-  todo!("Implement the index router")
+use crate::AppState;
+
+mod index;
+
+
+pub fn router() -> Router<AppState> {
+    Router::new().route("/index/:id", get(index::get_index))
 }

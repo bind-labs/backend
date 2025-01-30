@@ -4,7 +4,10 @@ pub mod feed;
 pub mod html;
 pub mod http;
 pub mod schema;
+pub mod query; 
 
+
+use schema::*;
 #[derive(Clone)]
 pub struct AppState {
     pub pool: sqlx::PgPool,

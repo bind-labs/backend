@@ -29,10 +29,10 @@ pub struct Feed {
     pub description: String,
     pub icon: Option<String>,
 
-    pub skip_hours: [i32; 24],
-    pub skip_days_of_week: [i32; 7],
+    pub skip_hours: [u32; 24],
+    pub skip_days_of_week: [u32; 7],
 
-    pub ttl_in_minutes: i32,
+    pub ttl_in_minutes: u32,
     pub suspended: bool,
 
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -90,8 +90,8 @@ impl From<&str> for SortOrder {
 /// An **Index** can be thought of as a custom search over a certain set of feeds.
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserIndex {
-    pub id: u32,
-    pub owner: u32,
+    pub id: i32,
+    pub owner: i32,
 
     pub query: String,
     pub sort: SortOrder,

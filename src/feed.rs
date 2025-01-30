@@ -1,6 +1,5 @@
-use atom_syndication::Feed;
-use chrono::format::Parsed;
-use rss::Channel;
+use core::fmt;
+use thiserror::Error;
 
 use crate::FeedItemEnclosure;
 
@@ -29,10 +28,18 @@ pub struct ParsedFeedItem {
     pub published_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
+#[derive(Debug, Error)]
+pub struct ParsedFeedCreationError{}
+impl fmt::Display for ParsedFeedCreationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Failed to create parsed feed")
+    }
+}
+
 // From RSS to ParsedFeed
 impl TryFrom<rss::Item> for ParsedFeedItem {
-    type Error = Box<dyn std::error::Error>;
-    fn try_from(value: rss::Item) -> Result<Self, Box<dyn std::error::Error>> {
+    type Error = ParsedFeedCreationError;
+    fn try_from(value: rss::Item) -> Result<Self, Self::Error> {
         let guid = value.guid().map(|guid| guid.value().to_string());
         // if title is not present then use description as title
         // as per rss spec one of the title or description should be present
@@ -48,11 +55,11 @@ impl TryFrom<rss::Item> for ParsedFeedItem {
 
         let enclosure = value.enclosure().map(|enclosure| FeedItemEnclosure {
             url: enclosure.url.clone(),
-            length: enclosure.length.clone().parse::<u32>().unwrap_or(0),
+            length: enclosure.length.clone().parse::<i32>().unwrap_or(0),
             mime_type: enclosure.mime_type.clone(),
         });
 
-        Ok(ParsedFeedItem {
+        Ok(Self {
             guid,
             title,
             link: value.link,
@@ -64,13 +71,14 @@ impl TryFrom<rss::Item> for ParsedFeedItem {
             published_at: value
                 .pub_date
                 .map(|date| date.parse::<chrono::DateTime<chrono::Utc>>())
-                .transpose()?,
+                .transpose()
+                .map_err(|_| ParsedFeedCreationError{})?,
         })
     }
 }
 
 impl TryFrom<rss::Channel> for ParsedFeed {
-    type Error = Box<dyn std::error::Error>;
+    type Error = ParsedFeedCreationError;
     fn try_from(value: rss::Channel) -> Result<Self, Self::Error> {
         let mut items = Vec::new();
         for item in value.items() {
@@ -102,7 +110,7 @@ impl TryFrom<rss::Channel> for ParsedFeed {
             })
             .collect::<Vec<_>>();
 
-        Ok(ParsedFeed {
+        Ok(Self {
             link: value.link,
             title: value.title,
             description: value.description,
@@ -115,49 +123,189 @@ impl TryFrom<rss::Channel> for ParsedFeed {
     }
 }
 
-// From Atom to ParsedFeed
-// impl TryFrom<atom_syndication::Feed> for ParsedFeed {
-//     type Error = Box<dyn std::error::Error>;
-//     fn try_from(value: atom_syndication::Feed) -> Result<Self, Self::Error> {
-//         let mut items = Vec::new();
-//         for entry in value.entries() {
-//             items.push(ParsedFeedItem {
-//                 guid: entry.id().map(|id| id.to_string()),
-//                 title: entry.title().to_string(),
-//                 link: entry.links().first().map(|link| link.href().to_string()),
-//                 description: entry.summary().map(|summary| summary.to_string()),
-//                 enclosure: None,
-//                 content: entry.content().map(|content| content.value().to_string()),
-//                 categories: entry
-//                     .categories()
-//                     .iter()
-//                     .map(|category| category.term().to_string())
-//                     .collect(),
-//                 comments_link: None,
-//                 published_at: entry
-//                     .published()
-//                     .map(|date| date.to_rfc3339())
-//                     .map(|date| date.parse::<chrono::DateTime<chrono::Utc>>())
-//                     .transpose()?,
-//             });
-//         }
+// From atom item to ParsedFeedItem
+impl TryFrom<atom_syndication::Entry> for ParsedFeedItem {
+    type Error = ParsedFeedCreationError;
+    fn try_from(value: atom_syndication::Entry) -> Result<Self, Self::Error> {
+        let enclosure: Option<FeedItemEnclosure> = value
+            .links
+            .iter()
+            .find(|link| link.rel == "enclosure")
+            .map(|link| FeedItemEnclosure {
+                url: link.href.clone(),
+                length: link
+                    .length
+                    .clone()
+                    .unwrap_or_default()
+                    .parse::<i32>()
+                    .unwrap_or(0),
+                mime_type: link.mime_type.clone().unwrap_or_default(),
+            });
 
-//         Ok(ParsedFeed {
-//             link: value
-//                 .links()
-//                 .first()
-//                 .map(|link| link.href().to_string())
-//                 .unwrap_or_default(),
-//             title: value.title().to_string(),
-//             description: value
-//                 .subtitle()
-//                 .map(|subtitle| subtitle.to_string())
-//                 .unwrap_or_default(),
-//             icon: value.logo().map(|logo| logo.to_string()),
-//             skip_hours: Vec::new(),
-//             skip_days_of_week: Vec::new(),
-//             ttl_in_minutes: 0,
-//             items,
-//         })
-//     }
-// }
+        let comments_link = value
+            .links
+            .iter()
+            .find(|link| link.rel == "comments")
+            .map(|link| link.href.clone());
+
+        // atom content can either have a value or an src attribute which is a link to the content
+        let content = value
+            .content
+            .map(|content| content.value.or_else(|| content.src))
+            .flatten();
+
+        Ok(Self {
+            guid: Some(value.id.clone()),
+            title: value.title.value,
+            link: Some(value.id),
+            description: value.summary.map(|summary| summary.value),
+            enclosure,
+            comments_link,
+            published_at: value.published.map(|published| published.into()),
+            content,
+            categories: Vec::new(),
+        })
+    }
+}
+
+// From atom to ParsedFeed
+impl TryFrom<atom_syndication::Feed> for ParsedFeed {
+    type Error = ParsedFeedCreationError;
+    fn try_from(value: atom_syndication::Feed) -> Result<Self, Self::Error> {
+        let mut items = Vec::new();
+        for entry in value.entries {
+            items.push(ParsedFeedItem::try_from(entry)?);
+        }
+        Ok(Self {
+            link: value.id,
+            title: value.title.value,
+            description: value
+                .subtitle
+                .map(|subtitle| subtitle.value)
+                .unwrap_or_default(),
+            icon: value.icon,
+            skip_hours: Vec::new(),
+            skip_days_of_week: Vec::new(),
+            ttl_in_minutes: 0,
+            items,
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use atom_syndication::Feed;
+    use rss::Channel;
+    #[test]
+    fn from_rss_feed() {
+        let simple_feed = r#"
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0">
+                <channel>
+                    <title>Simple Feed</title>
+                    <link>https://example.com/feed</link>
+                    <description>Simple feed description</description>
+                </channel>
+            </rss>
+        "#;
+
+        let channel = Channel::read_from(simple_feed.as_bytes()).unwrap();
+        let parsed_feed = ParsedFeed::try_from(channel).unwrap();
+
+        assert_eq!(parsed_feed.link, "https://example.com/feed");
+        assert_eq!(parsed_feed.title, "Simple Feed");
+        assert_eq!(parsed_feed.description, "Simple feed description");
+        assert_eq!(parsed_feed.items.len(), 0);
+        assert_eq!(parsed_feed.icon, None);
+    }
+    #[test]
+    fn from_rss_feed_with_items() {
+        let feed_with_items = r#"
+            <?xml version="1.0" encoding="UTF-8"?>
+            <rss version="2.0">
+                <channel>
+                    <title>Feed with items</title>
+                    <link>https://example.com/feed</link>
+                    <description>Feed with items description</description>
+                    <item>
+                        <title>Item 1</title>
+                        <link>https://example.com/item1</link>
+                        <description>Item 1 description</description>
+                    </item>
+                    <item>
+                        <title>Item 2</title>
+                        <link>https://example.com/item2</link>
+                        <description>Item 2 description</description>
+                        <enclosure url="https://example.com/item2.mp3" length="1024" type="audio/mpeg" />
+                    </item>
+                </channel>
+            </rss>
+        "#;
+
+        let channel = Channel::read_from(feed_with_items.as_bytes()).unwrap();
+        let parsed_feed = ParsedFeed::try_from(channel).unwrap();
+
+        assert!(parsed_feed.items.len() == 2);
+        assert_eq!(parsed_feed.items[1].title, "Item 2");
+        assert_eq!(
+            parsed_feed.items[1].link,
+            Some("https://example.com/item2".to_string())
+        );
+        assert_eq!(
+            parsed_feed.items[1].description,
+            Some("Item 2 description".to_string())
+        );
+    }
+    #[test]
+    fn from_atom_feed() {
+        let simple_feed = r#"
+            <?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+                <title>Simple Feed</title>
+                <id>https://example.com/feed</id>
+                <subtitle>Simple feed description</subtitle>
+            </feed>
+        "#;
+
+        let feed = Feed::read_from(simple_feed.as_bytes()).unwrap();
+        let parsed_feed = ParsedFeed::try_from(feed).unwrap();
+
+        assert_eq!(parsed_feed.link, "https://example.com/feed");
+        assert_eq!(parsed_feed.title, "Simple Feed");
+        assert_eq!(parsed_feed.description, "Simple feed description");
+        assert_eq!(parsed_feed.items.len(), 0);
+        assert_eq!(parsed_feed.icon, None);
+    }
+    #[test]
+    fn from_atom_feed_with_items() {
+        let feed_with_items = r#"
+            <?xml version="1.0" encoding="UTF-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+                <title>Feed with items</title>
+                <id>https://example.com/feed</id>
+                <subtitle>Feed with items description</subtitle>
+                <entry>
+                    <title>Item 1</title>
+                    <id>https://example.com/item1</id>
+                    <summary>Item 1 description</summary>
+                </entry>
+                <entry>
+                    <title>Item 2</title>
+                    <id>https://example.com/item2</id>
+                    <summary>Item 2 description</summary>
+                    <link rel="enclosure" href="https://example.com/item2.mp3" length="1024" type="audio/mpeg" />
+                </entry>
+            </feed>"#;
+
+        let feed = Feed::read_from(feed_with_items.as_bytes()).unwrap();
+        let parsed_feed = ParsedFeed::try_from(feed).unwrap();
+
+        assert!(parsed_feed.items.len() == 2);
+        assert_eq!(parsed_feed.items[1].title, "Item 2");
+        assert_eq!(
+            parsed_feed.items[1].link,
+            Some("https://example.com/item2".to_string())
+        )
+    }
+}
