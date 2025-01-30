@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "feed_type", rename_all = "lowercase")]
-pub enum FeedType {
+#[sqlx(type_name = "feed_format", rename_all = "lowercase")]
+pub enum FeedFormat {
     Atom,
     Rss,
     Json,
@@ -12,19 +12,18 @@ pub enum FeedType {
 /// Note: This feed can be an RSS, Atom or JSON feed.
 #[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize)]
 pub struct Feed {
-    pub id: u32,
-    #[sqlx(rename = "type")]
-    pub type_: FeedType,
+    pub id: i32,
+    pub format: FeedFormat,
     pub link: String,
     pub domain: String,
     pub title: String,
     pub description: String,
     pub icon: Option<String>,
 
-    pub skip_hours: [u32; 24],
-    pub skip_days_of_week: [u32; 7],
+    pub skip_hours: Vec<i32>,
+    pub skip_days_of_week: Vec<i32>,
 
-    pub ttl_in_minutes: u32,
+    pub ttl_in_minutes: i32,
     pub suspended: bool,
 
     pub created_at: chrono::DateTime<chrono::Utc>,

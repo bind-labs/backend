@@ -5,5 +5,5 @@ pub async fn get_feed(
     State(state): State<ApiContext>,
     Path(id): Path<String>,
 ) -> Result<Json<Feed>> {
-    Ok(Json(()))
+    todo!()
 }

@@ -4,11 +4,10 @@ pub mod parse;
 
 use serde::Serialize;
 
-pub use crate::sql::FeedType;
+pub use crate::sql::FeedFormat;
 
 #[derive(Serialize)]
 pub struct FeedInformation {
     pub link: String,
-    #[serde(rename = "type")]
-    pub type_: FeedType,
+    pub format: FeedFormat,
 }

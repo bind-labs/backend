@@ -8,11 +8,11 @@ CREATE TYPE icon AS (icon text, hex_color text);
 ---- Feeds -----
 ----------------
 
-CREATE TYPE feed_status AS ENUM ('active', 'suspended', 'broken');
-CREATE TYPE feed_type AS ENUM ('rss', 'atom', 'json');
+CREATE TYPE feed_status AS ENUM ('active', 'completed', 'suspended', 'broken');
+CREATE TYPE feed_format AS ENUM ('rss', 'atom', 'json');
 CREATE TABLE feed (
   id serial PRIMARY KEY,
-  type feed_type NOT NULL,
+  format feed_format NOT NULL,
   status feed_status NOT NULL DEFAULT 'active',
   link text NOT NULL UNIQUE,
   domain text NOT NULL,
@@ -26,7 +26,6 @@ CREATE TABLE feed (
   skip_days_of_week integer[7] NOT NULL DEFAULT '{}', -- 0 = Sunday, 1 = Monday, ...
   ttl_in_minutes integer NOT NULL DEFAULT 0, -- How long to cache the feed for
 
-  broken boolean NOT NULL DEFAULT false,
   -- Controls whether the feed should be updated
   -- 1 = 15 min, 2 = 30 min, 3 = 1 hour, 4 = 2 hours, 5 = 4 hours, 6 = 8 hours, 7 = 16 hours, 8 = 1 day
   priority integer NOT NULL DEFAULT 5 CHECK (priority >= 1 AND priority <= 8),
@@ -36,8 +35,9 @@ CREATE TABLE feed (
   updated_at timestamptz NOT NULL DEFAULT NOW()
 );
 CREATE INDEX feed_link ON feed (link);
+CREATE INDEX feed_status ON feed (status);
+CREATE INDEX feed_priority ON feed (priority);
 CREATE INDEX feed_updated_at ON feed (updated_at);
-CREATE INDEX feed_suspended ON feed (suspended);
 
 ----------------
 -- Feed Items --
@@ -64,7 +64,7 @@ CREATE TABLE feed_item (
 
   language char(2) NOT NULL,
   content text,
-  content_type string NOT NULL,
+  content_type text NOT NULL,
   base_link text,
 
   created_at timestamptz NOT NULL DEFAULT NOW(),
@@ -77,9 +77,9 @@ CREATE INDEX feed_item_index_in_feed ON feed_item (index_in_feed DESC);
 CREATE TABLE feed_item_parsed (
   id bigserial PRIMARY KEY,
   feed_item_id bigint NOT NULL REFERENCES feed_item (id) ON DELETE CASCADE,
-  base string NOT NULL,
+  base text NOT NULL,
   content text NOT NULL,
-  content_type string NOT NULL,
+  content_type text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT NOW(),
   updated_at timestamptz NOT NULL DEFAULT NOW()
 );

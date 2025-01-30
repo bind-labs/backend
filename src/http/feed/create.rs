@@ -1,12 +1,12 @@
 use crate::http::common::*;
-use crate::{feed::parse::ParsedFeed, sql::FeedType};
+use crate::{feed::parse::ParsedFeed, sql::FeedFormat};
 
 #[derive(Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateFeedRequest {
     #[validate(url)]
     link: String,
-    feed_type: FeedType,
+    format: FeedFormat,
 }
 
 pub async fn create_feed(
@@ -23,11 +23,11 @@ pub async fn create_feed(
         .text()
         .await?;
 
-    let parsed_feed = match body.feed_type {
-        FeedType::Atom => {
+    let parsed_feed = match body.format {
+        FeedFormat::Atom => {
             ParsedFeed::try_from(atom_syndication::Feed::read_from(feed_string.as_bytes())?)?
         }
-        FeedType::Rss => ParsedFeed::try_from(rss::Channel::read_from(feed_string.as_bytes())?)?,
+        FeedFormat::Rss => ParsedFeed::try_from(rss::Channel::read_from(feed_string.as_bytes())?)?,
         _ => unimplemented!(),
     };
 

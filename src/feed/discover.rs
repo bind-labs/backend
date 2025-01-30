@@ -1,6 +1,6 @@
 use scraper::{Html, Selector};
 
-use super::{FeedInformation, FeedType};
+use super::{FeedFormat, FeedInformation};
 
 /// Parses an HTML document and searches for feed links of all kind such as RSS, Atom, JSON etc.
 pub fn discover_feed_links(html: &str) -> Vec<FeedInformation> {
@@ -11,16 +11,16 @@ pub fn discover_feed_links(html: &str) -> Vec<FeedInformation> {
         .select(&selector)
         .filter_map(|element| {
             let link = element.value().attr("href")?;
-            let type_ = match element.value().attr("type") {
-                Some("application/atom+xml") => FeedType::Atom,
-                Some("application/rss+xml") => FeedType::Rss,
-                Some("application/json") => FeedType::Json,
+            let format = match element.value().attr("type") {
+                Some("application/atom+xml") => FeedFormat::Atom,
+                Some("application/rss+xml") => FeedFormat::Rss,
+                Some("application/json") => FeedFormat::Json,
                 _ => return None,
             };
 
             Some(FeedInformation {
                 link: link.to_string(),
-                type_,
+                format,
             })
         })
         .collect()
