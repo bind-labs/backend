@@ -1,11 +1,16 @@
 use axum::routing::{delete, get, post, put};
 use axum::Router;
 
-use crate::AppState;
-mod feed;
+use super::common::ApiContext;
 
-pub fn router() -> Router<AppState> {
+mod create;
+mod discover;
+mod get;
+mod list;
+
+pub fn router() -> Router<ApiContext> {
     Router::new()
-        .route("/feed-information", post(feed::get_feed_information))
-        .route("/feed", put(feed::create_feed))
+        .route("/feed", get(list::list_feeds).put(create::create_feed))
+        .route("/feed/:id", get(get::get_feed))
+        .route("/feed/discover", post(discover::discover_feeds))
 }

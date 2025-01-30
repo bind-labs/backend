@@ -29,7 +29,7 @@ pub struct ParsedFeedItem {
 }
 
 #[derive(Debug, Error)]
-pub struct ParsedFeedCreationError{}
+pub struct ParsedFeedCreationError {}
 impl fmt::Display for ParsedFeedCreationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Failed to create parsed feed")
@@ -72,7 +72,7 @@ impl TryFrom<rss::Item> for ParsedFeedItem {
                 .pub_date
                 .map(|date| date.parse::<chrono::DateTime<chrono::Utc>>())
                 .transpose()
-                .map_err(|_| ParsedFeedCreationError{})?,
+                .map_err(|_| ParsedFeedCreationError {})?,
         })
     }
 }
@@ -197,6 +197,7 @@ mod tests {
     use super::*;
     use atom_syndication::Feed;
     use rss::Channel;
+
     #[test]
     fn from_rss_feed() {
         let simple_feed = r#"
@@ -219,6 +220,7 @@ mod tests {
         assert_eq!(parsed_feed.items.len(), 0);
         assert_eq!(parsed_feed.icon, None);
     }
+
     #[test]
     fn from_rss_feed_with_items() {
         let feed_with_items = r#"
@@ -257,6 +259,7 @@ mod tests {
             Some("Item 2 description".to_string())
         );
     }
+
     #[test]
     fn from_atom_feed() {
         let simple_feed = r#"
@@ -277,6 +280,7 @@ mod tests {
         assert_eq!(parsed_feed.items.len(), 0);
         assert_eq!(parsed_feed.icon, None);
     }
+
     #[test]
     fn from_atom_feed_with_items() {
         let feed_with_items = r#"

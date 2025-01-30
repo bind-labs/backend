@@ -3,13 +3,13 @@ use std::time::Duration;
 use axum::Router;
 
 use backend::config::Config;
+use clap::Parser;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
-use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use backend::{http, AppState};
+use backend::{http, ApiContext};
 
 #[tokio::main]
 async fn main() {
@@ -33,11 +33,6 @@ async fn main() {
     dotenv::dotenv().ok();
     let config = Config::parse();
 
-    let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
-        .await
-        .expect("Failed to bind to port");
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
-
     let pool = PgPoolOptions::new()
         .max_connections(50)
         .acquire_timeout(Duration::from_secs(3))
@@ -47,17 +42,14 @@ async fn main() {
 
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
-    let reqwest_client = reqwest::Client::new();
-    let state = AppState {
-        pool,
-        config,
-        reqwest_client,
-    };
-
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
-        .nest("/feed", http::feed::router())
-        .with_state(state);
+        .nest("/api/v1", http::feed::router())
+        .with_state(ApiContext::new(pool));
 
+    let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
+        .await
+        .expect("Failed to bind to port");
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

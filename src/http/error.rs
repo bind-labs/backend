@@ -2,44 +2,44 @@ use axum::{
     http,
     response::{IntoResponse, Response},
 };
-use thiserror::Error;
 
-#[derive(Debug, Error)]
-pub enum ServerError {
+pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
     #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
+
     #[error("Failed to parse rss feed")]
     RssFeedParseError(#[from] rss::Error),
     #[error("Failed to parse atom feed")]
     AtomFeedParseError(#[from] atom_syndication::Error),
     #[error("Failed to create parsed feed")]
-    ParseFeedCreationError(#[from] crate::feed::ParsedFeedCreationError),
+    ParseFeedCreationError(#[from] crate::feed::parse::ParsedFeedCreationError),
 }
 
-impl IntoResponse for ServerError {
+impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self {
-            ServerError::ValidationError(_) => (http::StatusCode::BAD_REQUEST, "Validation error"),
-            ServerError::DatabaseError(_) => {
-                (http::StatusCode::INTERNAL_SERVER_ERROR, "Database error")
-            }
-            ServerError::ReqwestError(_) => (
+            Error::ValidationError(_) => (http::StatusCode::BAD_REQUEST, "Validation error"),
+            Error::DatabaseError(_) => (http::StatusCode::INTERNAL_SERVER_ERROR, "Database error"),
+            Error::ReqwestError(_) => (
                 http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to make request to third party",
             ),
-            ServerError::RssFeedParseError(_) => (
+            Error::RssFeedParseError(_) => (
                 http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse feed",
             ),
-            ServerError::AtomFeedParseError(_) => (
+            Error::AtomFeedParseError(_) => (
                 http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to parse feed",
             ),
-            ServerError::ParseFeedCreationError(_) => (
+            Error::ParseFeedCreationError(_) => (
                 http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to create parsed feed from internal feed",
             ),

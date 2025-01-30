@@ -33,9 +33,12 @@ Prefixed under `/api/v1`
     - `GET/PUT /` Lists the lists or creates a new one
     - `UPDATE/DELETE /:id`
     - `/:id`
-      - `read-later`, `history`, ... as custom IDs, create if doesn't exist
-      - `GET /list` Gets the items in the list
-      - `PUT/DELETE /:item_id`
+      - `GET /` List items
+      - `PUT /` Create a list
+      - `PUT/UPDATE/DELETE /:item_id` Creates/updates/deletes an item in the list
+  - History `/history`
+    - `GET/PUT /` Lists or adds to history
+    - `UPDATE/DELETE /:id`
 
 - User `/user`
   - `POST /login`

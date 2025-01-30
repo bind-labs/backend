@@ -94,7 +94,7 @@ CREATE TABLE "user" (
   id serial PRIMARY KEY,
 
   email text NOT NULL UNIQUE,
-  username text NOT NULL UNIQUE,
+  username text NOT NULL UNIQUE, -- TODO: use as primary key?
   providers auth_provider[] NOT NULL DEFAULT '{}',
   password_hash text,
   passwordless_pub_key text,
