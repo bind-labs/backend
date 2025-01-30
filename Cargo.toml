@@ -27,3 +27,9 @@ sqlx = { version = "0.8.3", features = ["runtime-tokio-rustls", "any", "postgres
 thiserror = "2.0.11"
 chrono = { version = "0.4.39", features = ["serde"] }
 serde_json = "1.0.138"
+http-body-util = "0.1.2"
+nom = "8.0.0"
+
+[dev-dependencies]
+pgtemp = "0.5.0"
+tower = { version = "0.5.2", features = ["util"] }
