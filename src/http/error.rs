@@ -3,6 +3,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+use crate::feed::parsed_feed::ParsedFeedCreationError;
+
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
@@ -19,7 +21,7 @@ pub enum Error {
     #[error("Failed to parse atom feed")]
     AtomFeedParseError(#[from] atom_syndication::Error),
     #[error("Failed to create parsed feed")]
-    ParseFeedCreationError(#[from] crate::feed::parse::ParsedFeedCreationError),
+    ParseFeedCreationError(#[from] ParsedFeedCreationError),
 }
 
 impl IntoResponse for Error {

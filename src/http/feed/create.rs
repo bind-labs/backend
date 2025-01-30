@@ -1,5 +1,8 @@
+use crate::feed::parsed_feed::feed::ParsedFeed;
 use crate::http::common::*;
-use crate::{feed::parse::ParsedFeed, sql::FeedFormat};
+use crate::sql::FeedFormat;
+
+
 
 #[derive(Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -34,5 +37,5 @@ pub async fn create_feed(
     // store queries in the database
 
     todo!("Parse the feed string and save it to the database");
-    Ok(())
+  
 }
