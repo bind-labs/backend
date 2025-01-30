@@ -1,5 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
+#[sqlx(type_name = "feed_status", rename_all = "lowercase")]
+pub enum FeedStatus {
+    Active,
+    Completed,
+    Suspended,
+    Broken,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "feed_format", rename_all = "lowercase")]
 pub enum FeedFormat {
@@ -13,18 +22,20 @@ pub enum FeedFormat {
 #[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize)]
 pub struct Feed {
     pub id: i32,
+    pub status: FeedStatus,
     pub format: FeedFormat,
     pub link: String,
     pub domain: String,
+
     pub title: String,
     pub description: String,
     pub icon: Option<String>,
 
     pub skip_hours: Vec<i32>,
     pub skip_days_of_week: Vec<i32>,
-
     pub ttl_in_minutes: i32,
-    pub suspended: bool,
+    pub next_update_at: chrono::DateTime<chrono::Utc>,
+    pub etag: Option<String>,
 
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,

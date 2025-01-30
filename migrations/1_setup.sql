@@ -24,20 +24,19 @@ CREATE TABLE feed (
 
   skip_hours integer[24] NOT NULL DEFAULT '{}', -- 0 - 23
   skip_days_of_week integer[7] NOT NULL DEFAULT '{}', -- 0 = Sunday, 1 = Monday, ...
-  ttl_in_minutes integer NOT NULL DEFAULT 0, -- How long to cache the feed for
-
-  -- Controls whether the feed should be updated
-  -- 1 = 15 min, 2 = 30 min, 3 = 1 hour, 4 = 2 hours, 5 = 4 hours, 6 = 8 hours, 7 = 16 hours, 8 = 1 day
-  priority integer NOT NULL DEFAULT 5 CHECK (priority >= 1 AND priority <= 8),
-  next_update_at timestamptz NOT NULL DEFAULT NOW(),
+  ttl_in_minutes integer NOT NULL DEFAULT 15, -- Minimum time to cache the feed for
+  etag text, -- ETag header from the last update
 
   created_at timestamptz NOT NULL DEFAULT NOW(),
-  updated_at timestamptz NOT NULL DEFAULT NOW()
+  updated_at timestamptz NOT NULL DEFAULT NOW(), -- Time of the last update to the content
+  fetched_at timestamptz NOT NULL DEFAULT NOW(), -- Time of the last fetch
+  successful_fetch_at timestamptz NOT NULL DEFAULT NOW(), -- Time of the last successful fetch
+  next_fetch_at timestamptz NOT NULL DEFAULT NOW() -- Time to fetch the feed next
 );
 CREATE INDEX feed_link ON feed (link);
 CREATE INDEX feed_status ON feed (status);
-CREATE INDEX feed_priority ON feed (priority);
 CREATE INDEX feed_updated_at ON feed (updated_at);
+CREATE INDEX feed_next_fetch_at ON feed (next_fetch_at);
 
 ----------------
 -- Feed Items --
