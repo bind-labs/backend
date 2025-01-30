@@ -8,22 +8,29 @@ CREATE TYPE icon AS (icon text, hex_color text);
 ---- Feeds -----
 ----------------
 
+CREATE TYPE feed_status AS ENUM ('active', 'suspended', 'broken');
 CREATE TYPE feed_type AS ENUM ('rss', 'atom', 'json');
 CREATE TABLE feed (
   id serial PRIMARY KEY,
   type feed_type NOT NULL,
+  status feed_status NOT NULL DEFAULT 'active',
   link text NOT NULL UNIQUE,
   domain text NOT NULL,
 
   title text NOT NULL,
   description text NOT NULL,
   icon text,
-  language char(2) NOT NULL DEFAULT 'en', -- ISO 639-1 code
+  language char(2) NOT NULL, -- ISO 639-1 code
 
   skip_hours integer[24] NOT NULL DEFAULT '{}', -- 0 - 23
   skip_days_of_week integer[7] NOT NULL DEFAULT '{}', -- 0 = Sunday, 1 = Monday, ...
   ttl_in_minutes integer NOT NULL DEFAULT 0, -- How long to cache the feed for
-  suspended boolean NOT NULL DEFAULT false, -- Whether the feed should be updated
+
+  broken boolean NOT NULL DEFAULT false,
+  -- Controls whether the feed should be updated
+  -- 1 = 15 min, 2 = 30 min, 3 = 1 hour, 4 = 2 hours, 5 = 4 hours, 6 = 8 hours, 7 = 16 hours, 8 = 1 day
+  priority integer NOT NULL DEFAULT 5 CHECK (priority >= 1 AND priority <= 8),
+  next_update_at timestamptz NOT NULL DEFAULT NOW(),
 
   created_at timestamptz NOT NULL DEFAULT NOW(),
   updated_at timestamptz NOT NULL DEFAULT NOW()
@@ -51,10 +58,14 @@ CREATE TABLE feed_item (
   link text,
   description text,
   enclosure feed_item_enclosure,
-  content text,
   categories text[] NOT NULL DEFAULT '{}',
   comments_link text,
   published_at timestamptz,
+
+  language char(2) NOT NULL,
+  content text,
+  content_type string NOT NULL,
+  base_link text,
 
   created_at timestamptz NOT NULL DEFAULT NOW(),
   updated_at timestamptz NOT NULL DEFAULT NOW()
@@ -66,7 +77,9 @@ CREATE INDEX feed_item_index_in_feed ON feed_item (index_in_feed DESC);
 CREATE TABLE feed_item_parsed (
   id bigserial PRIMARY KEY,
   feed_item_id bigint NOT NULL REFERENCES feed_item (id) ON DELETE CASCADE,
+  base string NOT NULL,
   content text NOT NULL,
+  content_type string NOT NULL,
   created_at timestamptz NOT NULL DEFAULT NOW(),
   updated_at timestamptz NOT NULL DEFAULT NOW()
 );
