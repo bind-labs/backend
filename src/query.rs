@@ -1,4 +1,3 @@
-use nom::bytes::tag_no_case;
 use nom::error::ErrorKind;
 use nom::sequence::{separated_pair, terminated};
 use nom::Parser;
@@ -6,17 +5,14 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::{char, space1},
-    combinator::{map, opt},
     multi::separated_list1,
     sequence::{delimited, preceded},
     IResult,
 };
 use validator::ValidationError;
 
-use crate::feed::parsed_feed;
-
 #[derive(PartialEq, Debug)]
-enum SearchExpr {
+pub enum SearchExpr {
     Phrase(String),
     Word(String),
     BinaryOp(BinaryOperator, Box<SearchExpr>, Box<SearchExpr>),
@@ -27,14 +23,14 @@ enum SearchExpr {
     Group(Vec<SearchExpr>),
 }
 #[derive(PartialEq, Debug)]
-enum BinaryOperator {
+pub enum BinaryOperator {
     And,
     Or,
 }
 
 #[derive(Debug)]
 pub struct Query {
-    feeds: Vec<SearchExpr>,
+    pub exprs: Vec<SearchExpr>,
 }
 
 fn parse_word(input: &str) -> IResult<&str, SearchExpr> {
@@ -147,11 +143,10 @@ pub fn parse_query(input: &str) -> IResult<&str, Query> {
             ErrorKind::Complete,
         )));
     }
-    Ok((input, Query { feeds: exprs }))
+    Ok((input, Query { exprs }))
 }
 mod tests {
     use super::*;
-
     #[test]
     fn test_parse_word() {
         let parsed = parse_word("hello world").unwrap();
@@ -290,7 +285,7 @@ mod tests {
     fn test_parsing_query() {
         let parsed = parse_query("hello world").unwrap();
         assert_eq!(
-            parsed.1.feeds,
+            parsed.1.exprs,
             vec![
                 SearchExpr::Word("hello".to_string()),
                 SearchExpr::Word("world".to_string())
@@ -299,7 +294,7 @@ mod tests {
 
         let parsed = parse_query("hello world feed:123").unwrap();
         assert_eq!(
-            parsed.1.feeds,
+            parsed.1.exprs,
             vec![
                 SearchExpr::Word("hello".to_string()),
                 SearchExpr::Word("world".to_string()),
@@ -312,7 +307,7 @@ mod tests {
 
         let parsed = parse_query("hello world feed:123 is:read").unwrap();
         assert_eq!(
-            parsed.1.feeds,
+            parsed.1.exprs,
             vec![
                 SearchExpr::Word("hello".to_string()),
                 SearchExpr::Word("world".to_string()),
@@ -326,7 +321,7 @@ mod tests {
 
         let parsed = parse_query("hello world feed:123 is:read OR is:unread").unwrap();
         assert_eq!(
-            parsed.1.feeds,
+            parsed.1.exprs,
             vec![
                 SearchExpr::Word("hello".to_string()),
                 SearchExpr::Word("world".to_string()),
@@ -345,7 +340,7 @@ mod tests {
         let parsed =
             parse_query("\"hello world\" feed:123 OR feed:2456 is:read NOT title:hello").unwrap();
         assert_eq!(
-            parsed.1.feeds,
+            parsed.1.exprs,
             vec![
                 SearchExpr::Phrase("hello world".to_string()),
                 SearchExpr::BinaryOp(
