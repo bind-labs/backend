@@ -5,7 +5,9 @@ use axum::Router;
 use backend::config::Config;
 use clap::Parser;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
 use tokio::net::TcpListener;
+use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -51,7 +53,7 @@ async fn main() {
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
         .nest("/api/v1", http::feed::router())
-        .with_state(ApiContext::new(pool));
+        .with_state(ApiContext::new(pool.clone()));
 
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
         .await
@@ -93,6 +95,4 @@ async fn shutdown_signal(db: PgPool, daemon: Daemon) {
     tracing::info!("Shutting down postgres connection pool");
     db.close().await;
     tracing::info!("Postgres connection pool shut down");
-
-    Ok(())
 }

@@ -10,7 +10,7 @@ use super::{
 };
 
 #[derive(Debug, Default)]
-struct FeedUpdate {
+pub struct FeedUpdate {
     pub status: Option<FeedStatus>,
     pub title: Option<String>,
     pub link: Option<String>,
