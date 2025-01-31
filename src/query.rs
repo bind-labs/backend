@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use nom::error::ErrorKind;
 use nom::sequence::{separated_pair, terminated};
 use nom::Parser;
@@ -9,9 +11,10 @@ use nom::{
     sequence::{delimited, preceded},
     IResult,
 };
+use sqlx::QueryBuilder;
 use validator::ValidationError;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum SearchExpr {
     Phrase(String),
     Word(String),
@@ -22,7 +25,7 @@ pub enum SearchExpr {
     IsUnread,
     Group(Vec<SearchExpr>),
 }
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum BinaryOperator {
     And,
     Or,
@@ -123,9 +126,9 @@ fn parse_not_op(input: &str) -> IResult<&str, SearchExpr> {
 
 fn parse_expr(input: &str) -> IResult<&str, SearchExpr> {
     alt((
+        parse_group,
         parse_binary_op,
         parse_not_op,
-        parse_group,
         parse_is,
         parse_field,
         parse_phrase,
@@ -145,12 +148,114 @@ pub fn parse_query(input: &str) -> IResult<&str, Query> {
     }
     Ok((input, Query { exprs }))
 }
+
+pub fn validate_query(query: &String) -> Result<(), ValidationError> {
+    match parse_query(query) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ValidationError::new("Invalid query")),
+    }
+}
+
+fn expr_to_sql(expr: &SearchExpr, params: &mut Vec<String>) -> (String, Vec<String>) {
+    match expr {
+        SearchExpr::Word(word) => {
+            params.push(format!("%{}%", word)); // Add parameter
+            (format!("content ILIKE ?"), params.clone()) // Use ? as a placeholder
+        }
+        SearchExpr::Phrase(phrase) => {
+            params.push(phrase.clone()); // Add parameter
+            (format!("content = ?"), params.clone()) // Use ? as a placeholder
+        }
+        SearchExpr::BinaryOp(op, left, right) => {
+            let (left_sql, left_params) = expr_to_sql(left, params);
+            let (right_sql, right_params) = expr_to_sql(right, &mut left_params.clone());
+            let operator = match op {
+                BinaryOperator::And => "AND",
+                BinaryOperator::Or => "OR",
+            };
+            (
+                format!("({} {} {})", left_sql, operator, right_sql),
+                right_params,
+            )
+        }
+        SearchExpr::Not(expr) => {
+            let (expr_sql, expr_params) = expr_to_sql(expr, params);
+            (format!("NOT ({})", expr_sql), expr_params)
+        }
+        SearchExpr::Field(field, expr) => match expr.as_ref() {
+            SearchExpr::Word(word) | SearchExpr::Phrase(word) => {
+                params.push(word.clone());
+                (format!("{} = ?", field), params.clone())
+            }
+            SearchExpr::Group(exprs) => {
+                let mut group_params = params.clone();
+                let conditions: Vec<String> = exprs
+                    .iter()
+                    .map(|expr| {
+                        let (sql, new_params) = expr_to_sql(
+                            &SearchExpr::Field(field.clone(), Box::new(expr.clone())),
+                            &mut group_params,
+                        );
+                        group_params = new_params;
+                        sql
+                    })
+                    .collect();
+                (format!("({})", conditions.join(" AND ")), group_params)
+            }
+            SearchExpr::BinaryOp(op, expr_a, expr_b) if op == &BinaryOperator::Or => {
+                let (expr_a_sql, expr_a_params) =
+                    expr_to_sql(&SearchExpr::Field(field.clone(), expr_a.clone()), params);
+                let (expr_b_sql, expr_b_params) = expr_to_sql(
+                    &SearchExpr::Field(field.clone(), expr_b.clone()),
+                    &mut expr_a_params.clone(),
+                );
+                (format!("{} OR {}", expr_a_sql, expr_b_sql), expr_b_params)
+            }
+            _ => unreachable!("Fields can only have groups, words or phrases"),
+        },
+        SearchExpr::IsRead => {
+            unimplemented!()
+        }
+        SearchExpr::IsUnread => {
+            unimplemented!()
+        }
+        SearchExpr::Group(exprs) => {
+            let mut group_params = params.clone();
+            let conditions: Vec<String> = exprs
+                .iter()
+                .map(|expr| {
+                    let (sql, new_params) = expr_to_sql(expr, &mut group_params);
+                    group_params = new_params;
+                    sql
+                })
+                .collect();
+            (format!("({})", conditions.join(" AND ")), group_params)
+        }
+    }
+}
+
+impl Query {
+    pub fn to_sql(&self) -> (String, Vec<String>) {
+        let mut params = Vec::new();
+        let conditions: Vec<String> = self
+            .exprs
+            .iter()
+            .map(|expr| {
+                let (sql, new_params) = expr_to_sql(expr, &mut params);
+                params = new_params;
+                sql
+            })
+            .collect();
+
+        (conditions.join(" AND "), params)
+    }
+}
 mod tests {
     use super::*;
     #[test]
     fn test_parse_word() {
         let parsed = parse_word("hello world").unwrap();
-
+        assert_eq!(parsed.1, SearchExpr::Word("hello".to_string()));
         assert_eq!(parsed.0, " world");
     }
     #[test]
@@ -362,11 +467,31 @@ mod tests {
             ]
         );
     }
-}
 
-pub fn validate_query(query: &String) -> Result<(), ValidationError> {
-    match parse_query(query) {
-        Ok(_) => Ok(()),
-        Err(_) => Err(ValidationError::new("Invalid query")),
+    #[test]
+    fn to_sql_query() {
+        let query = "\"hello world\" NOT title:hello".to_string();
+        let (_, parsed) = parse_query(&query).unwrap();
+        let (sql_query, values) = parsed.to_sql();
+        assert_eq!(sql_query, "content = ? AND NOT (title = ?)");
+        assert_eq!(values, vec!["hello world", "hello"]);
+
+        let query = "hello world feed:123 OR feed:2456 NOT title:hello".to_string();
+        let (_, parsed) = parse_query(&query).unwrap();
+        let (sql_query, values) = parsed.to_sql();
+        assert_eq!(
+            sql_query,
+            "content ILIKE ? AND content ILIKE ? AND (feed = ? OR feed = ?) AND NOT (title = ?)"
+        );
+        assert_eq!(values, vec!["%hello%", "%world%", "123", "2456", "hello"]);
+
+        let query = "title:(hello world) type:(video OR podcasts)".to_string();
+        let (_, parsed) = parse_query(&query).unwrap();
+        let (sql_query, values) = parsed.to_sql();
+        assert_eq!(
+            sql_query,
+            "(title = ? AND title = ?) AND (type = ? OR type = ?)"
+        );
+        assert_eq!(values, vec!["hello", "world", "video", "podcasts"]);
     }
 }
