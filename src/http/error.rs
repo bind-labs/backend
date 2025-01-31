@@ -3,7 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::feed::parsed_feed::ParsedFeedCreationError;
+use crate::feed::parser::ParsedFeedCreationError;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 

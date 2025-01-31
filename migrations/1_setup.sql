@@ -24,7 +24,7 @@ CREATE TABLE feed (
 
   skip_hours integer[24] NOT NULL DEFAULT '{}', -- 0 - 23
   skip_days_of_week integer[7] NOT NULL DEFAULT '{}', -- 0 = Sunday, 1 = Monday, ...
-  ttl_in_minutes integer NOT NULL DEFAULT 15, -- Minimum time to cache the feed for
+  ttl_in_minutes integer, -- Minimum time to cache the feed for
   etag text, -- ETag header from the last update
 
   created_at timestamptz NOT NULL DEFAULT NOW(),

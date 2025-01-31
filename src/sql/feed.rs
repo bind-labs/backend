@@ -33,12 +33,20 @@ pub struct Feed {
 
     pub skip_hours: Vec<i32>,
     pub skip_days_of_week: Vec<i32>,
-    pub ttl_in_minutes: i32,
-    pub next_update_at: chrono::DateTime<chrono::Utc>,
+    /// Minimum time to cache the feed for
+    pub ttl_in_minutes: Option<i32>,
+    /// ETag header from the last update
     pub etag: Option<String>,
 
     pub created_at: chrono::DateTime<chrono::Utc>,
+    /// Time of the last update to the content
     pub updated_at: chrono::DateTime<chrono::Utc>,
+    /// Time of the last fetch
+    pub fetched_at: chrono::DateTime<chrono::Utc>,
+    /// Time of the last successful fetch
+    pub successful_fetch_at: chrono::DateTime<chrono::Utc>,
+    /// Time to fetch the feed next
+    pub next_fetch_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// Represents an attach media file in a feed item (e.g. an image or audio file)

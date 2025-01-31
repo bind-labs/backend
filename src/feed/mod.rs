@@ -4,8 +4,9 @@ pub mod discover;
 use serde::{Deserialize, Serialize};
 
 pub use crate::sql::FeedFormat;
-pub mod parsed_feed;
+mod daemon;
 pub mod json;
+pub mod parser;
 
 #[derive(Serialize, Debug, Deserialize)]
 pub struct FeedInformation {

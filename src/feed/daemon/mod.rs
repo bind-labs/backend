@@ -1,12 +1,17 @@
+mod fetch;
+mod http;
+mod update;
+
 use std::sync::Arc;
 
-use chrono::Duration;
-use reqwest::{Response, StatusCode};
+use fetch::{build_reqwest_client, fetch_feed};
 use sqlx::PgPool;
 use tokio::sync::Semaphore;
+use update::get_feed_update;
 
-use crate::sql::{Feed, FeedFormat, FeedStatus};
+use crate::sql::{FeedFormat, FeedStatus};
 
+#[derive(Debug, Clone)]
 struct FeedToUpdate {
     pub id: i32,
     pub status: FeedStatus,
@@ -15,7 +20,7 @@ struct FeedToUpdate {
 
     pub skip_hours: Vec<i32>,
     pub skip_days_of_week: Vec<i32>,
-    pub ttl_in_minutes: i32,
+    pub ttl_in_minutes: Option<i32>,
     pub etag: Option<String>,
 
     pub updated_at: chrono::DateTime<chrono::Utc>,
@@ -44,7 +49,7 @@ pub async fn get_out_of_date_feeds(pool: &PgPool) -> Result<Vec<FeedToUpdate>, s
             successful_fetch_at,
             next_fetch_at
         FROM feed
-        WHERE next_fetch_at < NOW()"#,
+        WHERE next_fetch_at < NOW() AND status = 'active'"#,
     )
     .fetch_all(pool)
     .await?;
@@ -63,7 +68,7 @@ pub async fn run_update(pool: &PgPool, concurrent_updates: usize) -> Result<(), 
         let permit = semaphore.clone().acquire_owned().await.unwrap();
         let client = client.clone();
         handles.push(tokio::spawn(async move {
-            let feed_status = fetch_feed(
+            let status = fetch_feed(
                 &client,
                 &feed.link,
                 Some(&feed.updated_at),
@@ -71,24 +76,7 @@ pub async fn run_update(pool: &PgPool, concurrent_updates: usize) -> Result<(), 
             )
             .await;
 
-            match feed_status {
-                Ok(FeedUpdate::Modified(response)) => {
-                    todo!("Parse and update feed")
-                }
-                Ok(FeedUpdate::NotModified) => {
-                    todo!("Set new next_fetch_at time")
-                }
-                Ok(FeedUpdate::Moved(location)) => {
-                    todo!("Update feed URL and leave it for the next run")
-                }
-
-                Err(FeedUpdateError::RateLimited(duration)) => {
-                    todo!("Set the next_fetch_at time to the current time + duration")
-                }
-                _ => todo!(
-                    "Set the status to 'broken' if we haven't successfully fetched for a week+. Set next_fetch_at with backoff"
-                ),
-            };
+            let update = get_feed_update(status, feed);
 
             drop(permit);
         }));
@@ -96,135 +84,3 @@ pub async fn run_update(pool: &PgPool, concurrent_updates: usize) -> Result<(), 
 
     Ok(())
 }
-
-const USER_AGENT: &str = concat!("Bind/", env!("CARGO_PKG_VERSION"));
-
-fn build_reqwest_client() -> reqwest::Client {
-    let mut headers = reqwest::header::HeaderMap::new();
-    headers.insert(
-        reqwest::header::ACCEPT,
-        reqwest::header::HeaderValue::from_static(
-            "application/rss+xml, application/xml, application/atom+xml, application/json, text/xml;q=0.9",
-        ),
-    );
-    headers.insert(
-        reqwest::header::USER_AGENT,
-        reqwest::header::HeaderValue::from_static(USER_AGENT),
-    );
-    reqwest::Client::builder()
-        .default_headers(headers)
-        // Don't follow permanent redirects so that we can update the feed URL
-        .redirect(reqwest::redirect::Policy::custom(|attempt| {
-            if attempt.status() == StatusCode::MOVED_PERMANENTLY {
-                attempt.stop()
-            } else if attempt.previous().len() > 5 {
-                attempt.error("too many redirects")
-            } else {
-                attempt.follow()
-            }
-        }))
-        .build()
-        .unwrap()
-}
-
-pub async fn fetch_feed(
-    client: &reqwest::Client,
-    link: &str,
-    updated_at: Option<&chrono::DateTime<chrono::Utc>>,
-    etag: Option<&str>,
-) -> Result<FeedUpdate, FeedUpdateError> {
-    let mut request = client.get(link)
-        .timeout(std::time::Duration::from_secs(30))
-        .header(
-        "Accept",
-        "application/rss+xml, application/xml, application/atom+xml, application/json, text/xml;q=0.9",
-    );
-    if let Some(updated_at) = updated_at {
-        request = request.header("If-Modified-Since", updated_at.to_rfc2822());
-    }
-    if let Some(etag) = etag {
-        request = request.header("If-None-Match", etag);
-    }
-    let response = request.send().await?;
-
-    match response.status() {
-        // Success
-        StatusCode::OK => Ok(FeedUpdate::Modified(response)),
-        StatusCode::NOT_MODIFIED => Ok(FeedUpdate::NotModified),
-
-        StatusCode::MOVED_PERMANENTLY => {
-            let location = response
-                .headers()
-                .get("Location")
-                .and_then(|h| h.to_str().ok())
-                .map(|s| s.to_string())
-                .ok_or(FeedUpdateError::MovedWithoutLocation)?;
-            Ok(FeedUpdate::Moved(location))
-        }
-
-        // Errors
-        StatusCode::NOT_FOUND => Err(FeedUpdateError::NotFound),
-        StatusCode::BAD_REQUEST => Err(FeedUpdateError::BadRequest),
-        StatusCode::FORBIDDEN => Err(FeedUpdateError::Forbidden),
-
-        StatusCode::TOO_MANY_REQUESTS => Err(FeedUpdateError::RateLimited(
-            response
-                .headers()
-                .get("Retry-After")
-                .and_then(parse_retry_after)
-                // Default to 30 minutes
-                .unwrap_or(Duration::minutes(30)),
-        )),
-
-        status if status.as_u16() >= 500 && status.as_u16() <= 599 => {
-            Err(FeedUpdateError::ServerError(status))
-        }
-
-        status => Err(FeedUpdateError::UnexpectedError(status)),
-    }
-}
-
-pub fn parse_retry_after(header: &reqwest::header::HeaderValue) -> Option<Duration> {
-    let retry_after = header.to_str().ok()?;
-
-    let from_seconds = retry_after.parse::<i64>().ok().map(Duration::seconds);
-    let from_date = chrono::DateTime::parse_from_rfc2822(retry_after)
-        .ok()
-        .map(|d| d.signed_duration_since(chrono::Utc::now()));
-
-    from_seconds.or(from_date)
-}
-
-#[derive(Debug)]
-enum FeedUpdate {
-    Modified(Response),
-    NotModified,
-    Moved(String),
-}
-
-#[derive(Debug, thiserror::Error)]
-enum FeedUpdateError {
-    #[error("Feed no longer exists")]
-    NotFound,
-    #[error("Sent a bad request to the server")]
-    BadRequest,
-    #[error("Not allowed to access the feed")]
-    Forbidden,
-
-    #[error("Feed is rate limited")]
-    RateLimited(Duration),
-
-    #[error("Feed moved without providing a new location")]
-    MovedWithoutLocation,
-
-    #[error("Feed server failed with status code: {0}")]
-    ServerError(StatusCode),
-
-    #[error("Feed server responded with an unexpected status code: {0}")]
-    UnexpectedError(StatusCode),
-
-    #[error(transparent)]
-    ReqwestError(#[from] reqwest::Error),
-}
-
-type Result<T, E = FeedUpdate> = std::result::Result<T, E>;
