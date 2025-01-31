@@ -1,27 +1,27 @@
-use nom::sequence::separated_pair;
+use nom::bytes::tag_no_case;
+use nom::error::ErrorKind;
+use nom::sequence::{separated_pair, terminated};
 use nom::Parser;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
-    character::complete::{char, space0},
+    character::complete::{char, space1},
     combinator::{map, opt},
     multi::separated_list1,
     sequence::{delimited, preceded},
     IResult,
 };
-use tracing_subscriber::field::delimited;
 use validator::ValidationError;
+
+use crate::feed::parsed_feed;
 
 #[derive(PartialEq, Debug)]
 enum SearchExpr {
     Phrase(String),
     Word(String),
-    Exact(String),
     BinaryOp(BinaryOperator, Box<SearchExpr>, Box<SearchExpr>),
     Not(Box<SearchExpr>),
     Field(String, Box<SearchExpr>),
-    FeedId(String),
-    TagId(String),
     IsRead,
     IsUnread,
     Group(Vec<SearchExpr>),
@@ -33,7 +33,7 @@ enum BinaryOperator {
 }
 
 #[derive(Debug)]
-struct Query {
+pub struct Query {
     feeds: Vec<SearchExpr>,
 }
 
@@ -52,7 +52,7 @@ fn parse_field(input: &str) -> IResult<&str, SearchExpr> {
     let (input, field) = separated_pair(
         take_while1(|c: char| c.is_alphanumeric()),
         char(':'),
-        alt((parse_word, parse_phrase)),
+        alt((parse_group, parse_word, parse_phrase)),
     )
     .parse(input)?;
 
@@ -73,63 +73,96 @@ fn parse_is(input: &str) -> IResult<&str, SearchExpr> {
     }
 }
 
-fn parse_feed_id(input: &str) -> IResult<&str, SearchExpr> {
-    let (input, feed_id) =
-        preceded(tag("feed:"), take_while1(|c: char| c.is_numeric())).parse(input)?;
-    Ok((input, SearchExpr::FeedId(feed_id.to_string())))
+fn parse_group(input: &str) -> IResult<&str, SearchExpr> {
+    let (input, exprs) = delimited(
+        char('('),
+        separated_list1(
+            space1,
+            alt((parse_group, parse_binary_op, parse_word, parse_phrase)),
+        ),
+        char(')'),
+    )
+    .parse(input)?;
+    Ok((input, SearchExpr::Group(exprs)))
 }
 
-fn parse_tag_id(input: &str) -> IResult<&str, SearchExpr> {
-    let (input, tag_id) =
-        preceded(tag("tag:"), take_while1(|c: char| c.is_numeric())).parse(input)?;
-    Ok((input, SearchExpr::TagId(tag_id.to_string())))
+fn parse_binary_operator(input: &str) -> IResult<&str, BinaryOperator> {
+    let (input, operator) = alt((tag("AND"), tag("OR"))).parse(input)?;
+    let operator = match operator {
+        "AND" => BinaryOperator::And,
+        "OR" => BinaryOperator::Or,
+        _ => unreachable!(),
+    };
+
+    Ok((input, operator))
 }
 
+fn parse_binary_op(input: &str) -> IResult<&str, SearchExpr> {
+    let (input, (left, (operator, right))) = separated_pair(
+        alt((parse_group, parse_is, parse_field, parse_word, parse_phrase)),
+        space1,
+        separated_pair(
+            parse_binary_operator,
+            space1,
+            alt((parse_group, parse_is, parse_field, parse_word, parse_phrase)),
+        ),
+    )
+    .parse(input)?;
 
+    Ok((
+        input,
+        SearchExpr::BinaryOp(operator, Box::new(left), Box::new(right)),
+    ))
+}
 
-fn parse_query(input: &str) -> IResult<&str, Query> {
-    let (input, exprs) = separated_list1(
-        char(' '),
-        alt((
-            parse_is,
-            parse_feed_id,
-            parse_tag_id,
-            parse_field,
-            parse_word,
-            parse_phrase,
-        )),
-    ).parse(input)?;
+fn parse_not_op(input: &str) -> IResult<&str, SearchExpr> {
+    let (input, value) = preceded(
+        terminated(tag("NOT"), space1),
+        alt((parse_group, parse_field, parse_word, parse_phrase)),
+    )
+    .parse(input)?;
+
+    Ok((input, SearchExpr::Not(Box::new(value))))
+}
+
+fn parse_expr(input: &str) -> IResult<&str, SearchExpr> {
+    alt((
+        parse_binary_op,
+        parse_not_op,
+        parse_group,
+        parse_is,
+        parse_field,
+        parse_phrase,
+        parse_word,
+    ))
+    .parse(input)
+}
+
+pub fn parse_query(input: &str) -> IResult<&str, Query> {
+    let (input, exprs) = separated_list1(space1, parse_expr).parse(input)?;
+    // Ensure that the entire input is consumed
+    if !input.trim().is_empty() {
+        return Err(nom::Err::Error(nom::error::Error::new(
+            input,
+            ErrorKind::Complete,
+        )));
+    }
     Ok((input, Query { feeds: exprs }))
 }
-
-
 mod tests {
     use super::*;
 
     #[test]
     fn test_parse_word() {
-        let parsed = parse_word("hello world").expect("This should not fail");
-        assert_eq!(parsed.1, SearchExpr::Word("hello".to_string()));
+        let parsed = parse_word("hello world").unwrap();
+
         assert_eq!(parsed.0, " world");
     }
     #[test]
     fn test_parse_phrase() {
-        let parsed = parse_phrase("\"hello world\"").expect("This should not fail");
+        let parsed = parse_phrase("\"hello world\"").unwrap();
         assert_eq!(parsed.1, SearchExpr::Phrase("hello world".to_string()));
         assert_eq!(parsed.0, "");
-    }
-
-    #[test]
-    fn test_parse_field() {
-        let parsed = parse_field("title:hello world").expect("This should not fail");
-        assert_eq!(
-            parsed.1,
-            SearchExpr::Field(
-                "title".to_string(),
-                Box::new(SearchExpr::Word("hello".to_string()))
-            )
-        );
-        assert_eq!(parsed.0, " world");
     }
     #[test]
     fn test_parse_is() {
@@ -143,26 +176,202 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_feed_id() {
-        let parsed = parse_feed_id("feed:123").expect("This should not fail");
-        assert_eq!(parsed.1, SearchExpr::FeedId("123".to_string()));
-        assert_eq!(parsed.0, "");
+    fn test_parse_field() {
+        let parsed = parse_field("title:hello").expect("This should not fail");
+        assert_eq!(
+            parsed.1,
+            SearchExpr::Field(
+                "title".to_string(),
+                Box::new(SearchExpr::Word("hello".to_string()))
+            )
+        );
+
+        let parsed = parse_field("title:(hello world)").expect("This should not fail");
+        assert_eq!(
+            parsed.1,
+            SearchExpr::Field(
+                "title".to_string(),
+                Box::new(SearchExpr::Group(vec![
+                    SearchExpr::Word("hello".to_string()),
+                    SearchExpr::Word("world".to_string())
+                ]))
+            )
+        );
     }
 
     #[test]
-    fn test_parse_tag_id() {
-        let parsed = parse_tag_id("tag:123").expect("This should not fail");
-        assert_eq!(parsed.1, SearchExpr::TagId("123".to_string()));
+    fn test_parse_group() {
+        let parsed = parse_group("(hello world)").expect("This should not fail");
+        assert_eq!(
+            parsed.1,
+            SearchExpr::Group(vec![
+                SearchExpr::Word("hello".to_string()),
+                SearchExpr::Word("world".to_string())
+            ])
+        );
         assert_eq!(parsed.0, "");
+
+        // handle
+        let parsed = parse_group("(hello world feed:123)");
+        assert!(parsed.is_err());
+
+        // handle group of groups
+        let parsed = parse_group("(hello (world))").expect("This should not fail");
+        assert_eq!(
+            parsed.1,
+            SearchExpr::Group(vec![
+                SearchExpr::Word("hello".to_string()),
+                SearchExpr::Group(vec![SearchExpr::Word("world".to_string())])
+            ])
+        );
+    }
+
+    #[test]
+    fn test_parse_not_op() {
+        let parsed = parse_not_op("NOT hello").unwrap();
+        assert_eq!(
+            parsed.1,
+            SearchExpr::Not(Box::new(SearchExpr::Word("hello".to_string())))
+        );
+        assert_eq!(parsed.0, "");
+
+        let parsed = parse_not_op("NOT (hello world)").unwrap();
+        assert_eq!(
+            parsed.1,
+            SearchExpr::Not(Box::new(SearchExpr::Group(vec![
+                SearchExpr::Word("hello".to_string()),
+                SearchExpr::Word("world".to_string())
+            ])))
+        );
+
+        let parsed = parse_not_op("NOT title:hello").unwrap();
+        assert_eq!(
+            parsed.1,
+            SearchExpr::Not(Box::new(SearchExpr::Field(
+                "title".to_string(),
+                Box::new(SearchExpr::Word("hello".to_string()))
+            )))
+        );
+    }
+
+    #[test]
+    fn test_binary_op() {
+        let parsed = parse_binary_op("hello AND world").unwrap();
+        assert_eq!(
+            parsed.1,
+            SearchExpr::BinaryOp(
+                BinaryOperator::And,
+                Box::new(SearchExpr::Word("hello".to_string())),
+                Box::new(SearchExpr::Word("world".to_string()))
+            )
+        );
+        assert_eq!(parsed.0, "");
+
+        let parsed = parse_binary_op("(hello OR world) OR (hello AND world)").unwrap();
+        assert_eq!(
+            parsed.1,
+            SearchExpr::BinaryOp(
+                BinaryOperator::Or,
+                Box::new(SearchExpr::Group(vec![SearchExpr::BinaryOp(
+                    BinaryOperator::Or,
+                    Box::new(SearchExpr::Word("hello".to_string())),
+                    Box::new(SearchExpr::Word("world".to_string()))
+                )])),
+                Box::new(SearchExpr::Group(vec![SearchExpr::BinaryOp(
+                    BinaryOperator::And,
+                    Box::new(SearchExpr::Word("hello".to_string())),
+                    Box::new(SearchExpr::Word("world".to_string()))
+                )]))
+            )
+        );
     }
 
     #[test]
     fn test_parsing_query() {
-        let parsed = parse_query("\"hello world\" link:yellow testing feed:123 is:unread").expect("This should not fail");
-        assert_eq!(parsed.1.feeds.len(), 5);
+        let parsed = parse_query("hello world").unwrap();
+        assert_eq!(
+            parsed.1.feeds,
+            vec![
+                SearchExpr::Word("hello".to_string()),
+                SearchExpr::Word("world".to_string())
+            ]
+        );
+
+        let parsed = parse_query("hello world feed:123").unwrap();
+        assert_eq!(
+            parsed.1.feeds,
+            vec![
+                SearchExpr::Word("hello".to_string()),
+                SearchExpr::Word("world".to_string()),
+                SearchExpr::Field(
+                    "feed".to_string(),
+                    Box::new(SearchExpr::Word("123".to_string()))
+                )
+            ]
+        );
+
+        let parsed = parse_query("hello world feed:123 is:read").unwrap();
+        assert_eq!(
+            parsed.1.feeds,
+            vec![
+                SearchExpr::Word("hello".to_string()),
+                SearchExpr::Word("world".to_string()),
+                SearchExpr::Field(
+                    "feed".to_string(),
+                    Box::new(SearchExpr::Word("123".to_string()))
+                ),
+                SearchExpr::IsRead
+            ]
+        );
+
+        let parsed = parse_query("hello world feed:123 is:read OR is:unread").unwrap();
+        assert_eq!(
+            parsed.1.feeds,
+            vec![
+                SearchExpr::Word("hello".to_string()),
+                SearchExpr::Word("world".to_string()),
+                SearchExpr::Field(
+                    "feed".to_string(),
+                    Box::new(SearchExpr::Word("123".to_string()))
+                ),
+                SearchExpr::BinaryOp(
+                    BinaryOperator::Or,
+                    Box::new(SearchExpr::IsRead),
+                    Box::new(SearchExpr::IsUnread)
+                )
+            ]
+        );
+
+        let parsed =
+            parse_query("\"hello world\" feed:123 OR feed:2456 is:read NOT title:hello").unwrap();
+        assert_eq!(
+            parsed.1.feeds,
+            vec![
+                SearchExpr::Phrase("hello world".to_string()),
+                SearchExpr::BinaryOp(
+                    BinaryOperator::Or,
+                    Box::new(SearchExpr::Field(
+                        "feed".to_string(),
+                        Box::new(SearchExpr::Word("123".to_string()))
+                    )),
+                    Box::new(SearchExpr::Field(
+                        "feed".to_string(),
+                        Box::new(SearchExpr::Word("2456".to_string()))
+                    ))
+                ),
+                SearchExpr::IsRead,
+                SearchExpr::Not(Box::new(SearchExpr::Field(
+                    "title".to_string(),
+                    Box::new(SearchExpr::Word("hello".to_string()))
+                )))
+            ]
+        );
     }
 }
 
 pub fn validate_query(query: &String) -> Result<(), ValidationError> {
-    Ok(())
+    match parse_query(query) {
+        Ok(_) => Ok(()),
+        Err(_) => Err(ValidationError::new("Invalid query")),
+    }
 }

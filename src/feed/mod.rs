@@ -1,4 +1,4 @@
-mod daemon;
+// mod daemon;
 pub mod discover;
 
 use serde::{Deserialize, Serialize};
