@@ -1,12 +1,17 @@
 mod fetch;
 mod http;
+mod query;
 mod update;
 
-use std::sync::Arc;
+use sqlx::PgPool;
+use std::{sync::Arc, time::Duration};
+use tokio::{
+    sync::{oneshot, Semaphore},
+    task::JoinHandle,
+};
 
 use fetch::{build_reqwest_client, fetch_feed};
-use sqlx::PgPool;
-use tokio::sync::Semaphore;
+use query::get_out_of_date_feeds;
 use update::get_feed_update;
 
 use crate::sql::{FeedFormat, FeedStatus};
@@ -29,58 +34,66 @@ struct FeedToUpdate {
     pub next_fetch_at: chrono::DateTime<chrono::Utc>,
 }
 
-pub async fn get_out_of_date_feeds(pool: &PgPool) -> Result<Vec<FeedToUpdate>, sqlx::Error> {
-    let out_of_date_feeds = sqlx::query_as!(
-        FeedToUpdate,
-        r#"
-        SELECT
-            id,
-            status AS "status: FeedStatus",
-            format AS "format: FeedFormat",
-            link,
-
-            skip_hours,
-            skip_days_of_week,
-            ttl_in_minutes,
-            etag,
-
-            updated_at,
-            fetched_at,
-            successful_fetch_at,
-            next_fetch_at
-        FROM feed
-        WHERE next_fetch_at < NOW() AND status = 'active'"#,
-    )
-    .fetch_all(pool)
-    .await?;
-
-    Ok(out_of_date_feeds)
+pub struct Daemon {
+    task: JoinHandle<()>,
+    cancel_tx: oneshot::Sender<()>,
 }
 
-pub async fn run_update(pool: &PgPool, concurrent_updates: usize) -> Result<(), sqlx::Error> {
-    let semaphore = Arc::new(Semaphore::new(concurrent_updates));
-    let mut handles = Vec::new();
+impl Daemon {
+    pub fn new(pool: PgPool, concurrent_updates: usize) -> Self {
+        let (cancel_tx, mut cancel_rx) = oneshot::channel();
 
-    let client = build_reqwest_client();
-    let out_of_date_feeds = get_out_of_date_feeds(pool).await?;
+        let task = tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(15));
 
-    for feed in out_of_date_feeds.into_iter() {
-        let permit = semaphore.clone().acquire_owned().await.unwrap();
-        let client = client.clone();
-        handles.push(tokio::spawn(async move {
-            let status = fetch_feed(
-                &client,
-                &feed.link,
-                Some(&feed.updated_at),
-                feed.etag.as_deref(),
-            )
-            .await;
+            loop {
+                tokio::select! {
+                    _ = &mut cancel_rx => break,
+                    _ = interval.tick() => {
+                        // TODO: split up the updates into batches and check for cancel each time
+                        if let Err(err) = Daemon::run_update(&pool, concurrent_updates).await {
+                            tracing::error!("Error in update: {:?}", err);
+                        }
+                    }
+                }
+            }
+        });
 
-            let update = get_feed_update(status, feed);
-
-            drop(permit);
-        }));
+        Self { task, cancel_tx }
     }
 
-    Ok(())
+    async fn run_update(pool: &PgPool, concurrent_updates: usize) -> Result<(), sqlx::Error> {
+        let semaphore = Arc::new(Semaphore::new(concurrent_updates));
+        let mut handles = Vec::new();
+
+        let client = build_reqwest_client();
+        let out_of_date_feeds = get_out_of_date_feeds(pool).await?;
+
+        for feed in out_of_date_feeds.into_iter() {
+            let permit = semaphore.clone().acquire_owned().await.unwrap();
+            let client = client.clone();
+            handles.push(tokio::spawn(async move {
+                let status = fetch_feed(
+                    &client,
+                    &feed.link,
+                    Some(&feed.updated_at),
+                    feed.etag.as_deref(),
+                )
+                .await;
+
+                let update = get_feed_update(status, feed);
+
+                drop(permit);
+            }));
+        }
+
+        Ok(())
+    }
+
+    pub async fn cancel(self) {
+        self.cancel_tx.send(()).unwrap();
+        if let Err(err) = self.task.await {
+            tracing::error!("Error while canceling feed daemon: {:?}", err);
+        }
+    }
 }

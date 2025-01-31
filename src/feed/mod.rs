@@ -4,7 +4,7 @@ pub mod discover;
 use serde::{Deserialize, Serialize};
 
 pub use crate::sql::FeedFormat;
-mod daemon;
+pub mod daemon;
 pub mod json;
 pub mod parser;
 

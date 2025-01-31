@@ -9,6 +9,7 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use backend::feed::daemon::Daemon;
 use backend::http::{self, common::ApiContext};
 
 #[tokio::main]
@@ -33,6 +34,7 @@ async fn main() {
     dotenv::dotenv().ok();
     let config = Config::parse();
 
+    // Initialize database and run migrations
     let pool = PgPoolOptions::new()
         .max_connections(50)
         .acquire_timeout(Duration::from_secs(3))
@@ -42,6 +44,10 @@ async fn main() {
 
     sqlx::migrate!("./migrations").run(&pool).await.unwrap();
 
+    // Start the feed daemon
+    let daemon = Daemon::new(pool.clone(), 5);
+
+    // Start the API
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
         .nest("/api/v1", http::feed::router())
@@ -50,6 +56,43 @@ async fn main() {
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
         .await
         .expect("Failed to bind to port");
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal(pool, daemon))
+        .await
+        .unwrap();
+}
+
+async fn shutdown_signal(db: PgPool, daemon: Daemon) {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    tracing::info!("Shutting down feed daemon");
+    daemon.cancel().await;
+    tracing::info!("Feed daemon shut down");
+
+    tracing::info!("Shutting down postgres connection pool");
+    db.close().await;
+    tracing::info!("Postgres connection pool shut down");
+
+    Ok(())
 }
