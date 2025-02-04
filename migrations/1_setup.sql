@@ -1,3 +1,5 @@
+CREATE EXTENSION pg_search;
+
 ----------------
 ---- Common ----
 ----------------
@@ -15,7 +17,7 @@ CREATE TABLE feed (
   format feed_format NOT NULL,
   status feed_status NOT NULL DEFAULT 'active',
   link text NOT NULL UNIQUE,
-  domain text NOT NULL,
+  domain text, -- Optional because IP addresses aren't a domain
 
   title text NOT NULL,
   description text NOT NULL,

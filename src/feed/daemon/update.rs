@@ -1,37 +1,89 @@
 use chrono::{Duration, Utc};
+use reqwest::Url;
 use sqlx::PgPool;
 
-use crate::sql::{FeedItem, FeedStatus};
+use crate::{
+    feed::parser::{feed_item::ParsedFeedItem, parse_feed_from_response},
+    sql::{FeedFormat, FeedStatus},
+};
 
 use super::{
     fetch::{FeedFetch, FeedFetchError},
-    http::parse_cache_control_max_age,
+    http::{parse_cache_control_max_age, parse_etag},
     FeedToUpdate,
 };
 
 #[derive(Debug, Default)]
 pub struct FeedUpdate {
     pub status: Option<FeedStatus>,
-    pub title: Option<String>,
+    pub format: Option<FeedFormat>,
     pub link: Option<String>,
+    pub domain: Option<String>,
+
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub icon: Option<String>,
+
+    pub skip_hours: Option<Vec<i32>>,
+    pub skip_days_of_week: Option<Vec<i32>>,
+    pub ttl_in_minutes: Option<i32>,
+    pub etag: Option<String>,
 
     pub fetched_at: Option<chrono::DateTime<chrono::Utc>>,
     pub successful_fetch_at: Option<chrono::DateTime<chrono::Utc>>,
-    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
     pub next_fetch_at: Option<chrono::DateTime<chrono::Utc>>,
 
-    pub items: Vec<FeedItem>,
+    pub items: Option<Vec<ParsedFeedItem>>,
 }
 
-pub fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: FeedToUpdate) -> FeedUpdate {
+pub async fn get_feed_update(
+    fetch: Result<FeedFetch, FeedFetchError>,
+    feed: FeedToUpdate,
+) -> FeedUpdate {
     match fetch {
-        Ok(FeedFetch::Modified(response)) => FeedUpdate {
-            fetched_at: Some(Utc::now()),
-            successful_fetch_at: Some(Utc::now()),
-            updated_at: Some(Utc::now()),
-            items: Vec::new(),
-            ..Default::default()
-        },
+        Ok(FeedFetch::Modified(response)) => {
+            let cache_duration = response
+                .headers()
+                .get("Cache-Control")
+                .and_then(parse_cache_control_max_age);
+            let etag = response.headers().get("ETag").and_then(parse_etag);
+            // TODO: handle errors
+            let parsed_feed = parse_feed_from_response(response).await.unwrap();
+
+            // Check if the feed hasn't been updated since the last time we fetched it
+            let updated_since = parsed_feed
+                .updated_at
+                .map(|updated_at| updated_at > feed.successful_fetch_at)
+                .unwrap_or(false);
+            if feed.etag == etag || updated_since {
+                return FeedUpdate {
+                    etag,
+                    fetched_at: Some(Utc::now()),
+                    successful_fetch_at: Some(Utc::now()),
+                    ..get_next_fetch_time(&feed, cache_duration).into()
+                };
+            }
+
+            FeedUpdate {
+                format: Some(parsed_feed.format),
+
+                title: Some(parsed_feed.title),
+                description: Some(parsed_feed.description),
+                icon: parsed_feed.icon,
+
+                skip_hours: Some(parsed_feed.skip_hours),
+                skip_days_of_week: Some(parsed_feed.skip_days_of_week),
+                ttl_in_minutes: Some(parsed_feed.ttl_in_minutes),
+                etag,
+
+                fetched_at: Some(Utc::now()),
+                successful_fetch_at: Some(Utc::now()),
+
+                items: Some(parsed_feed.items),
+
+                ..get_next_fetch_time(&feed, cache_duration).into()
+            }
+        }
 
         // Update the next fetch time
         Ok(FeedFetch::NotModified(response)) => {
@@ -39,8 +91,10 @@ pub fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: FeedToUpd
                 .headers()
                 .get("Cache-Control")
                 .and_then(parse_cache_control_max_age);
+            let etag = response.headers().get("ETag").and_then(parse_etag);
 
             FeedUpdate {
+                etag,
                 fetched_at: Some(Utc::now()),
                 successful_fetch_at: Some(Utc::now()),
                 ..get_next_fetch_time(&feed, cache_duration).into()
@@ -49,6 +103,10 @@ pub fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: FeedToUpd
 
         // Update the feed URL and leave it for the next run
         Ok(FeedFetch::Moved(location)) => FeedUpdate {
+            // TODO: fail if the url fails to parse?
+            domain: Url::parse(&location)
+                .ok()
+                .and_then(|url| url.domain().map(|domain| domain.to_string())),
             link: Some(location),
             ..Default::default()
         },

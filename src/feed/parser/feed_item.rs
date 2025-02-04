@@ -2,10 +2,11 @@ use crate::{feed::json::JsonFeedItem, sql::FeedItemEnclosure};
 
 use super::ParsedFeedCreationError;
 
+#[derive(Debug)]
 pub struct ParsedFeedItem {
-    pub guid: Option<String>,
-    pub title: String,
+    pub guid: String,
     pub link: Option<String>,
+    pub title: String,
     pub description: Option<String>,
     pub enclosure: Option<FeedItemEnclosure>,
     pub content: Option<String>,
@@ -17,18 +18,23 @@ pub struct ParsedFeedItem {
 impl TryFrom<rss::Item> for ParsedFeedItem {
     type Error = ParsedFeedCreationError;
     fn try_from(value: rss::Item) -> Result<Self, Self::Error> {
-        let guid = value.guid().map(|guid| guid.value().to_string());
+        let guid = value
+            .guid()
+            .map(|guid| guid.value())
+            .or(value.link())
+            // because if you don't include guid or link, wtf is wrong with you
+            .or(value.title())
+            .or(value.description())
+            .map(|val| val.to_string())
+            .ok_or_else(|| ParsedFeedCreationError::RssFeedParsingError)?;
+
         // if title is not present then use description as title
         // as per rss spec one of the title or description should be present
         let title = value
             .title()
-            .map(|title| title.to_string())
-            .unwrap_or_else(|| {
-                value
-                    .description()
-                    .map(|description| description.to_string())
-                    .unwrap_or_default()
-            });
+            .or(value.description())
+            .map(|val| val.to_string())
+            .ok_or_else(|| ParsedFeedCreationError::RssFeedParsingError)?;
 
         let enclosure = value.enclosure().map(|enclosure| FeedItemEnclosure {
             url: enclosure.url.clone(),
@@ -85,7 +91,7 @@ impl TryFrom<atom_syndication::Entry> for ParsedFeedItem {
             .flatten();
 
         Ok(Self {
-            guid: Some(value.id.clone()),
+            guid: value.id.clone(),
             title: value.title.value,
             link: Some(value.id),
             description: value.summary.map(|summary| summary.value),
@@ -118,12 +124,12 @@ impl TryFrom<JsonFeedItem> for ParsedFeedItem {
             .flatten();
 
         Ok(Self {
-            guid: Some(value.id),
+            guid: value.id,
             title,
             link: value.url,
             description: value.summary,
             enclosure,
-            content: content,
+            content,
             categories: value.tags.unwrap_or_default(),
             comments_link: value.external_url,
             published_at: value.date_published,

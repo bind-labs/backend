@@ -17,6 +17,21 @@ pub enum FeedFormat {
     Json,
 }
 
+impl FeedFormat {
+    pub fn from_content_type(content_type: &str) -> Option<Self> {
+        match content_type {
+            "application/rss+xml" | "application/rss" | "text/xml" | "text/rss+xml" => {
+                Some(Self::Rss)
+            }
+            "application/atom+xml" | "applcation/atom" | "text/atom+xml" | "text/atom" => {
+                Some(Self::Atom)
+            }
+            "application/json" | "text/json" => Some(Self::Json),
+            _ => None,
+        }
+    }
+}
+
 /// Represents a single feed in the database.
 /// Note: This feed can be an RSS, Atom or JSON feed.
 #[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize)]
@@ -25,7 +40,7 @@ pub struct Feed {
     pub status: FeedStatus,
     pub format: FeedFormat,
     pub link: String,
-    pub domain: String,
+    pub domain: Option<String>,
 
     pub title: String,
     pub description: String,
@@ -61,10 +76,10 @@ pub struct FeedItemEnclosure {
 /// Represent a single feed item in the database
 #[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize)]
 pub struct FeedItem {
-    pub id: u64,
-    pub feed_id: u64,
+    pub id: i64,
+    pub feed_id: i64,
+    pub index_in_feed: i32,
     pub guid: Option<String>,
-    pub index_in_feed: u32,
 
     pub title: String,
     pub link: Option<String>,

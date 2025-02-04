@@ -34,3 +34,7 @@ pub fn parse_cache_control_max_age(header: &HeaderValue) -> Option<Duration> {
     // Return None if max-age is not found or parsing fails.
     None
 }
+
+pub fn parse_etag(header: &HeaderValue) -> Option<String> {
+    Some(header.to_str().ok()?.to_string())
+}

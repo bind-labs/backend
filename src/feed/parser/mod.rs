@@ -1,4 +1,9 @@
+use feed::ParsedFeed;
+use reqwest::Response;
+use rss::Channel;
 use thiserror::Error;
+
+use super::{json::JsonFeed, FeedFormat};
 
 pub mod feed;
 pub mod feed_item;
@@ -12,6 +17,66 @@ pub enum ParsedFeedCreationError {
     #[error("Error parsing Atom feed item")]
     AtomFeedParsingError,
 }
+
+pub async fn parse_feed_from_response(
+    response: Response,
+) -> Result<ParsedFeed, ParsedFromResponseError> {
+    let headers = response.headers().clone();
+    let content_type = headers
+        .get("content-type")
+        .ok_or_else(|| ParsedFromResponseError::UnknownContentType)
+        .and_then(|x| {
+            x.to_str()
+                .map_err(|_| ParsedFromResponseError::CorruptContentType)
+        })
+        .and_then(|x| {
+            x.split(";")
+                .next()
+                .ok_or(ParsedFromResponseError::CorruptContentType)
+        })?;
+
+    let body = response
+        .bytes()
+        .await
+        .map_err(|err| ParsedFromResponseError::CorruptResponseBody(err))?;
+
+    match FeedFormat::from_content_type(content_type) {
+        Some(FeedFormat::Rss) => Channel::read_from(body.as_ref())
+            .map_err(ParsedFromResponseError::RssParseError)?
+            .try_into()
+            .map_err(ParsedFromResponseError::GenericParseError),
+        Some(FeedFormat::Atom) => atom_syndication::Feed::read_from(body.as_ref())
+            .map_err(ParsedFromResponseError::AtomParseError)?
+            .try_into()
+            .map_err(ParsedFromResponseError::GenericParseError),
+        Some(FeedFormat::Json) => JsonFeed::read_from(body.as_ref())
+            .map_err(ParsedFromResponseError::JsonParseError)?
+            .try_into()
+            .map_err(ParsedFromResponseError::GenericParseError),
+        _ => Err(ParsedFromResponseError::UnknownContentType),
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ParsedFromResponseError {
+    #[error("Unknown content type")]
+    UnknownContentType,
+    #[error("Corrupt content type")]
+    CorruptContentType,
+    #[error("Corrupt response body")]
+    CorruptResponseBody(reqwest::Error),
+
+    #[error("Error parsing RSS feed")]
+    RssParseError(rss::Error),
+    #[error("Error parsing Atom feed")]
+    AtomParseError(atom_syndication::Error),
+    #[error("Error parsing JSON feed")]
+    JsonParseError(serde_json::Error),
+
+    #[error("Error parsing feed")]
+    GenericParseError(ParsedFeedCreationError),
+}
+
 #[cfg(test)]
 mod tests {
     use crate::feed::json::JsonFeed;

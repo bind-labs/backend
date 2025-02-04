@@ -1,3 +1,4 @@
+mod apply;
 mod fetch;
 mod http;
 mod query;
@@ -91,6 +92,7 @@ impl Daemon {
     }
 
     pub async fn cancel(self) {
+        // TODO: timeout and force cancel
         self.cancel_tx.send(()).unwrap();
         if let Err(err) = self.task.await {
             tracing::error!("Error while canceling feed daemon: {:?}", err);
