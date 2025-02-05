@@ -1,5 +1,3 @@
-CREATE EXTENSION pg_search;
-
 ----------------
 ---- Common ----
 ----------------
