@@ -52,7 +52,27 @@
           };
         };
 
-        devShells.default = craneLib.devShell {
+        devShells.default = let
+          start-postgres = pkgs.writeShellScriptBin "start-postgres" ''
+            #!${pkgs.bash}/bin/bash
+            echo "Starting postgres..."
+            docker run -p 5432:5432 -e POSTGRES_PASSWORD=bind -e POSTGRES_USER=bind -e POSTGRES_DB=bind --name bind-postgres -d postgres >/dev/null \
+              || docker start bind-postgres >/dev/null
+            echo "Running migrations..."
+            sleep 1 && sqlx migrate run
+          '';
+          recreate-postgres = pkgs.writeShellScriptBin "recreate-postgres" ''
+            #!${pkgs.bash}/bin/bash
+            destroy-postgres
+            start-postgres
+          '';
+          destroy-postgres = pkgs.writeShellScriptBin "destroy-postgres" ''
+            #!${pkgs.bash}/bin/bash
+            echo "Destroying postgres..."
+            docker stop bind-postgres >/dev/null
+            docker rm bind-postgres >/dev/null
+          '';
+        in craneLib.devShell {
           checks = self.checks.${system};
           shellHook = ''
             export PGUSER=bind
@@ -60,7 +80,14 @@
             export PGDATABASE=bind
             export PGHOST=localhost
           '';
-          packages = with pkgs; [ sqlx-cli cargo-watch postgresql ];
+          packages = with pkgs; [
+            sqlx-cli
+            cargo-watch
+            postgresql
+            start-postgres
+            recreate-postgres
+            destroy-postgres
+          ];
         };
       });
 }
