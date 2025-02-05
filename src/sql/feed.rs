@@ -83,19 +83,23 @@ pub struct FeedItemEnclosure {
 pub struct FeedItem {
     pub id: i64,
     pub feed_id: i32,
-    pub index_in_feed: i32,
     pub guid: String,
+    pub index_in_feed: i32,
 
     pub title: String,
     pub link: Option<String>,
     pub description: Option<String>,
     #[ormx(custom_type, by_ref)]
     pub enclosure: Option<FeedItemEnclosure>,
-    pub content: Option<String>,
     #[ormx(by_ref)]
     pub categories: Vec<String>,
     pub comments_link: Option<String>,
     pub published_at: Option<chrono::DateTime<chrono::Utc>>,
+
+    pub language: String,
+    pub content: Option<String>,
+    pub content_type: String,
+    pub base_link: Option<String>,
 
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
