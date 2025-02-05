@@ -14,6 +14,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use backend::feed::daemon::Daemon;
 use backend::http::{self, common::ApiContext};
 
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::registry()
@@ -53,6 +54,7 @@ async fn main() {
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
         .nest("/api/v1", http::feed::router())
+        .nest("/api/v1", http::lists::router())
         .with_state(ApiContext::new(pool.clone()));
 
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))

@@ -1,9 +1,7 @@
-use core::fmt;
 use std::io::BufRead;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct Attachment {

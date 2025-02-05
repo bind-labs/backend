@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use nom::error::ErrorKind;
 use nom::sequence::{separated_pair, terminated};
 use nom::Parser;
@@ -11,7 +9,6 @@ use nom::{
     sequence::{delimited, preceded},
     IResult,
 };
-use sqlx::QueryBuilder;
 use validator::ValidationError;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -149,7 +146,7 @@ pub fn parse_query(input: &str) -> IResult<&str, Query> {
     Ok((input, Query { exprs }))
 }
 
-pub fn validate_query(query: &String) -> Result<(), ValidationError> {
+pub fn validate_query(query: &str) -> Result<(), ValidationError> {
     match parse_query(query) {
         Ok(_) => Ok(()),
         Err(_) => Err(ValidationError::new("Invalid query")),
@@ -160,11 +157,11 @@ fn expr_to_sql(expr: &SearchExpr, params: &mut Vec<String>) -> (String, Vec<Stri
     match expr {
         SearchExpr::Word(word) => {
             params.push(format!("%{}%", word)); // Add parameter
-            (format!("content ILIKE ?"), params.clone()) // Use ? as a placeholder
+            ("content ILIKE ?".to_string(), params.clone()) // Use ? as a placeholder
         }
         SearchExpr::Phrase(phrase) => {
             params.push(phrase.clone()); // Add parameter
-            (format!("content = ?"), params.clone()) // Use ? as a placeholder
+            ("content = ?".to_string(), params.clone()) // Use ? as a placeholder
         }
         SearchExpr::BinaryOp(op, left, right) => {
             let (left_sql, left_params) = expr_to_sql(left, params);

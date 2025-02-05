@@ -34,6 +34,7 @@ mod test {
     use sqlx::postgres::PgPoolOptions;
     use tower::ServiceExt;
     #[tokio::test]
+    #[ignore]
     async fn finds_hacker_news_rss() {
         let hacker_news_url = "https://news.ycombinator.com/";
         let db = PgTempDB::async_new().await;
