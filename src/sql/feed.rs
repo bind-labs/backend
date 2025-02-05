@@ -79,7 +79,7 @@ pub struct FeedItem {
     pub id: i64,
     pub feed_id: i64,
     pub index_in_feed: i32,
-    pub guid: Option<String>,
+    pub guid: String,
 
     pub title: String,
     pub link: Option<String>,
