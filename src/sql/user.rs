@@ -20,16 +20,18 @@ impl From<&str> for AuthProvider {
 }
 
 /// Represents a user in the database
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[ormx(table = "user", id = id, insertable, deletable)]
 pub struct User {
-    pub id: u32,
+    pub id: i32,
     pub email: String,
     pub username: String,
+    #[ormx(custom_type, by_ref)]
     pub providers: Vec<AuthProvider>,
     pub password_hash: Option<String>,
     pub passwordless_pub_key: Option<String>,
+    #[ormx(by_ref)]
     pub refresh_tokens: Vec<String>,
-
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }

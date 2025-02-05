@@ -11,53 +11,13 @@ pub use feed::*;
 pub use history::*;
 pub use index::*;
 pub use list::*;
-use sqlx::{
-    encode::IsNull, postgres::{PgArgumentBuffer, PgTypeInfo, PgValueRef}, prelude::FromRow, Decode, Encode, Type
-};
-use std::fmt::Write;
+
 pub use user::*;
-#[derive(Clone, Debug, Serialize, Deserialize, FromRow)]
+
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type)]
 pub struct Icon {
     pub icon: String,
     pub color: String,
-}
-
-impl Type<sqlx::Postgres> for Icon {
-    fn type_info() -> PgTypeInfo {
-        PgTypeInfo::with_name("icon")
-    }
-}
-
-impl Encode<'_, sqlx::Postgres> for Icon {
-    fn encode_by_ref(
-        &self,
-        buf: &mut PgArgumentBuffer,
-    ) -> Result<IsNull, Box<dyn std::error::Error + Sync + Send>> {
-        let mut output = String::new();
-        write!(&mut output, "(\"{}\",\"{}\")", self.icon, self.color).unwrap();
-
-        buf.extend(output.as_bytes());
-        Ok(IsNull::No)
-    }
-}
-
-impl Decode<'_, sqlx::Postgres> for Icon {
-    fn decode(
-        value: PgValueRef<'_>,
-    ) -> Result<Self, Box<dyn std::error::Error + 'static + Send + Sync>> {
-        let value = value.as_str()?;
-        let trimmed = value.trim_matches(&['(', ')'][..]);
-        let parts: Vec<&str> = trimmed.split(',').map(|s| s.trim_matches('"')).collect();
-
-        if parts.len() != 2 {
-            return Err("Invalid composite type format".into());
-        }
-
-        let icon = parts[0].to_string();
-        let color = parts[1].to_string();
-
-        Ok(Icon { icon, color })
-    }
 }
 
 impl Icon {

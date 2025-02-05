@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[sqlx(type_name = "feed_status", rename_all = "lowercase")]
 pub enum FeedStatus {
     Active,
@@ -9,7 +9,7 @@ pub enum FeedStatus {
     Broken,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "feed_format", rename_all = "lowercase")]
 pub enum FeedFormat {
     Atom,
@@ -34,10 +34,13 @@ impl FeedFormat {
 
 /// Represents a single feed in the database.
 /// Note: This feed can be an RSS, Atom or JSON feed.
-#[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize)]
+#[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
+#[ormx(table = "feed", id = id, insertable, deletable)]
 pub struct Feed {
     pub id: i32,
+    #[ormx(custom_type)]
     pub status: FeedStatus,
+    #[ormx(custom_type)]
     pub format: FeedFormat,
     pub link: String,
     pub domain: Option<String>,
@@ -45,8 +48,9 @@ pub struct Feed {
     pub title: String,
     pub description: String,
     pub icon: Option<String>,
-
+    #[ormx(by_ref)]
     pub skip_hours: Vec<i32>,
+    #[ormx(by_ref)]
     pub skip_days_of_week: Vec<i32>,
     /// Minimum time to cache the feed for
     pub ttl_in_minutes: Option<i32>,
@@ -74,18 +78,21 @@ pub struct FeedItemEnclosure {
 }
 
 /// Represent a single feed item in the database
-#[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize)]
+#[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
+#[ormx(table = "feed_item", id = id, insertable, deletable)]
 pub struct FeedItem {
     pub id: i64,
-    pub feed_id: i64,
+    pub feed_id: i32,
     pub index_in_feed: i32,
     pub guid: String,
 
     pub title: String,
     pub link: Option<String>,
     pub description: Option<String>,
+    #[ormx(custom_type, by_ref)]
     pub enclosure: Option<FeedItemEnclosure>,
     pub content: Option<String>,
+    #[ormx(by_ref)]
     pub categories: Vec<String>,
     pub comments_link: Option<String>,
     pub published_at: Option<chrono::DateTime<chrono::Utc>>,

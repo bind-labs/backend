@@ -97,7 +97,7 @@ CREATE TABLE "user" (
   providers auth_provider[] NOT NULL DEFAULT '{}',
   password_hash text,
   passwordless_pub_key text,
-  refresh_tokens text[],
+  refresh_tokens text[] NOT NULL DEFAULT '{}',
 
   created_at timestamptz NOT NULL DEFAULT NOW(),
   updated_at timestamptz NOT NULL DEFAULT NOW()
