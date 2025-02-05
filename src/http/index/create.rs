@@ -1,6 +1,8 @@
+use ormx::Insert;
+
 use crate::http::auth::AuthUser;
 use crate::http::common::*;
-use crate::sql::{Icon, SortOrder, UserIndex};
+use crate::sql::{Icon,  InsertUserIndex, SortOrder, UserIndex};
 
 #[derive(Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -22,30 +24,15 @@ pub async fn create_index(
     body.validate()?;
 
     let sort: &str = body.sort.into();
-    let query = sqlx::query_as!(
-        UserIndex,
-        r#"
-        INSERT INTO user_index (owner, query, sort, title, description, icon)
-        VALUES ($1, $2,$3, $4, $5, $6)
-        RETURNING 
-            id,
-            owner,
-            query,
-            sort,
-            title,
-            description,
-            icon as "icon:Icon",
-            created_at,
-            updated_at
-        "#,
-        user.id,
-        body.query,
-        sort,
-        body.title,
-        body.description,
-        body.icon as _
-    )
-    .fetch_one(&state.pool)
+    let query = InsertUserIndex {
+        owner: user.id,
+        query: body.query.clone(),
+        sort: sort.to_string(),
+        title: body.title.clone(),
+        description: body.description.clone(),
+        icon: body.icon.clone(),
+    }
+    .insert(&state.pool)
     .await?;
 
     Ok(Json(query))
@@ -77,9 +64,7 @@ mod test {
             sort: SortOrder::AsIs,
             title: "Hello World".to_string(),
             description: None,
-            icon: Icon::get_random_icon()
+            icon: Icon::get_random_icon(),
         };
-
-        
     }
 }

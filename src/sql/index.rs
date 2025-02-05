@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user_index", id = id, insertable, deletable)]
 pub struct UserIndex {
+    #[ormx(default)]
     pub id: i32,
     pub owner: i32,
 
@@ -18,6 +19,8 @@ pub struct UserIndex {
     #[ormx(custom_type, by_ref)]
     pub icon: Icon,
 
+    #[ormx(default)]
     pub created_at: chrono::DateTime<chrono::Utc>,
+    #[ormx(default, set)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }

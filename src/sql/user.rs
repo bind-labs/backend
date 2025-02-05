@@ -23,6 +23,7 @@ impl From<&str> for AuthProvider {
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user", id = id, insertable, deletable)]
 pub struct User {
+    #[ormx(default)]
     pub id: i32,
     pub email: String,
     pub username: String,
@@ -32,6 +33,8 @@ pub struct User {
     pub passwordless_pub_key: Option<String>,
     #[ormx(by_ref)]
     pub refresh_tokens: Vec<String>,
+    #[ormx(default)]
     pub created_at: chrono::DateTime<chrono::Utc>,
+    #[ormx(default, set)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }

@@ -81,6 +81,7 @@ pub struct FeedItemEnclosure {
 #[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
 #[ormx(table = "feed_item", id = id, insertable, deletable)]
 pub struct FeedItem {
+    #[ormx(default)]
     pub id: i64,
     pub feed_id: i32,
     pub guid: String,
@@ -100,7 +101,8 @@ pub struct FeedItem {
     pub content: Option<String>,
     pub content_type: String,
     pub base_link: Option<String>,
-
+    #[ormx(default)]
     pub created_at: chrono::DateTime<chrono::Utc>,
+    #[ormx(default, set)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }

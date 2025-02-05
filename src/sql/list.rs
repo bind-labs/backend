@@ -7,14 +7,16 @@ use super::Icon;
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user_list", id = id, insertable, deletable)]
 pub struct UserList {
+    #[ormx(default)]
     pub id: i32,
     pub owner: i32,
     pub title: String,
     pub description: Option<String>,
     #[ormx(custom_type, by_ref)]
     pub icon: Option<Icon>,
-
+    #[ormx(default)]
     pub created_at: chrono::DateTime<chrono::Utc>,
+    #[ormx(default)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -22,6 +24,7 @@ pub struct UserList {
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user_list_item", id = id, insertable, deletable)]
 pub struct UserListItem {
+    #[ormx(default)]
     pub id: i32,
     pub index: i32,
     pub owner: i32,
@@ -29,7 +32,8 @@ pub struct UserListItem {
     pub list: i32,
     /// The id of the feed item this item is referencing
     pub item: i64,
-
+    #[ormx(default)]
     pub created_at: chrono::DateTime<chrono::Utc>,
+    #[ormx(default, set)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
