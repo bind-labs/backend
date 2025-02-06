@@ -1,5 +1,6 @@
 use chrono::Utc;
 use ormx::{Insert, Table};
+use sqlx::PgConnection;
 
 use crate::{
     feed::parser::feed_item::ParsedFeedItem,
@@ -17,7 +18,7 @@ pub async fn apply_feed_update(
 
     let mut did_update_items = false;
     if let Some(items) = feed_update.items.as_ref() {
-        did_update_items = apply_feed_items_update(db, &mut *tx, feed.id, items).await?;
+        did_update_items = apply_feed_items_update(db, &mut tx, feed.id, items).await?;
     }
 
     let updated_at = if did_update_items {
@@ -86,7 +87,7 @@ pub async fn apply_feed_update(
 
 pub async fn apply_feed_items_update(
     db: impl sqlx::Executor<'_, Database = ormx::Db>,
-    tx: impl sqlx::Executor<'_, Database = ormx::Db>,
+    tx: &mut PgConnection,
     feed_id: i32,
     items: &[ParsedFeedItem],
 ) -> Result<bool, sqlx::Error> {
@@ -106,12 +107,12 @@ pub async fn apply_feed_items_update(
         if let Some(existing_item) = existing_item {
             let mut existing_item = existing_item.clone();
             existing_item.merge_with_parsed(item);
-            existing_item.update(tx).await?;
+            existing_item.update(&mut *tx).await?;
             // TODO: check if items were updated
         } else {
             // TODO: set index_in_feed
             InsertFeedItem::from_parsed(item, feed_id, 0)
-                .insert(tx)
+                .insert(&mut *tx)
                 .await?;
             did_update_items = true;
         }
@@ -120,7 +121,7 @@ pub async fn apply_feed_items_update(
     // Prune oldest items (by id) to limit the number of items to 1000
     // TODO: use created_at before using id. should we use updated_at instead?
     sqlx::query!("DELETE FROM feed_item WHERE id IN (SELECT id FROM feed_item WHERE feed_id = $1 ORDER BY id DESC OFFSET 1000)", feed_id)
-        .execute(tx)
+        .execute(&mut *tx)
         .await?;
 
     Ok(did_update_items)
