@@ -1,3 +1,4 @@
+#![allow(unused)]
 use axum::response::IntoResponse;
 
 use crate::http::auth::AuthUser;

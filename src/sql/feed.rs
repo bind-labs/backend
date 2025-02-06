@@ -1,7 +1,7 @@
 use ormx::Insert;
 use serde::{Deserialize, Serialize};
 
-use crate::feed::parser::feed_item::ParsedFeedItem;
+use crate::feed::{daemon::FeedUpdate, parser::feed_item::ParsedFeedItem};
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[sqlx(type_name = "feed_status", rename_all = "lowercase")]
@@ -101,6 +101,34 @@ impl Feed {
         )
         .fetch_all(pool)
         .await
+    }
+
+    pub fn merge_with_update(&mut self, update: &FeedUpdate) {
+        self.status = update.status.unwrap_or(self.status);
+        self.format = update.format.unwrap_or(self.format);
+        self.link = update.link.clone().unwrap_or(self.link.clone());
+        self.domain = update.domain.clone().or(self.domain.clone());
+
+        self.title = update.title.clone().unwrap_or(self.title.clone());
+        self.description = update
+            .description
+            .clone()
+            .unwrap_or(self.description.clone());
+        self.icon = update.icon.clone().or(self.icon.clone());
+
+        self.skip_hours = update.skip_hours.clone().unwrap_or(self.skip_hours.clone());
+        self.skip_days_of_week = update
+            .skip_days_of_week
+            .clone()
+            .unwrap_or(self.skip_days_of_week.clone());
+        self.ttl_in_minutes = update.ttl_in_minutes.or(self.ttl_in_minutes);
+        self.etag = update.etag.clone().or(self.etag.clone());
+
+        self.fetched_at = update.fetched_at.unwrap_or(self.fetched_at);
+        self.successful_fetch_at = update
+            .successful_fetch_at
+            .unwrap_or(self.successful_fetch_at);
+        self.next_fetch_at = update.next_fetch_at.unwrap_or(self.next_fetch_at);
     }
 }
 

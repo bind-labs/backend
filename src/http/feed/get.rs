@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::http::common::*;
 use crate::sql::Feed;
 

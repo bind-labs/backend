@@ -139,7 +139,7 @@ pub async fn update_feed_link(pool: &PgPool, feed_id: i32, link: &str) -> Result
     Ok(())
 }
 
-pub fn get_next_fetch_time(feed: &FeedToUpdate, cache_duration: Option<Duration>) -> NextUpdate {
+pub fn get_next_fetch_time(feed: &Feed, cache_duration: Option<Duration>) -> NextUpdate {
     let time_since_successful_fetch: Duration =
         feed.successful_fetch_at.signed_duration_since(Utc::now());
     if time_since_successful_fetch > Duration::weeks(4) {

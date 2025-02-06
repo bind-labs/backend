@@ -2,7 +2,7 @@ use ormx::Insert;
 
 use crate::http::auth::AuthUser;
 use crate::http::common::*;
-use crate::sql::{Icon,  InsertUserIndex, SortOrder, UserIndex};
+use crate::sql::{Icon, InsertUserIndex, SortOrder, UserIndex};
 
 #[derive(Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -43,11 +43,8 @@ mod test {
     use crate::sql::Icon;
 
     use super::*;
-    use axum::{http::Request, routing::post, Router};
-    use http_body_util::BodyExt;
     use pgtemp::PgTempDB;
     use sqlx::postgres::PgPoolOptions;
-    use tower::ServiceExt;
     #[tokio::test]
     #[ignore]
     async fn should_create_index_only_on_valid_query() {
@@ -57,9 +54,9 @@ mod test {
             .await
             .unwrap();
 
-        let state = ApiContext::new(pool);
+        let _state = ApiContext::new(pool);
 
-        let create_index = CreateIndexRequest {
+        let _create_index = CreateIndexRequest {
             query: "test hello world".to_string(),
             sort: SortOrder::AsIs,
             title: "Hello World".to_string(),

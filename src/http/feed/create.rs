@@ -24,7 +24,7 @@ pub async fn create_feed(
         .text()
         .await?;
 
-    let parsed_feed = match body.format {
+    let _parsed_feed = match body.format {
         FeedFormat::Atom => {
             ParsedFeed::try_from(atom_syndication::Feed::read_from(feed_string.as_bytes())?)?
         }

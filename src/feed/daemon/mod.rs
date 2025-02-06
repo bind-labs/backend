@@ -3,6 +3,8 @@ mod fetch;
 mod http;
 mod update;
 
+pub use update::FeedUpdate;
+
 use apply::apply_feed_update;
 use sqlx::PgPool;
 use std::{sync::Arc, time::Duration};
