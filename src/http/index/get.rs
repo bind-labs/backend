@@ -2,11 +2,17 @@
 use crate::http::auth::AuthUser;
 use crate::http::common::*;
 use crate::sql::UserIndex;
+use ormx::Table;
 
 pub async fn get_index(
     user: AuthUser,
     State(state): State<ApiContext>,
-    Path(id): Path<String>,
+    Path(id): Path<i32>,
 ) -> Result<Json<UserIndex>> {
-    todo!();
+    let index = UserIndex::get(&state.pool, id).await?;
+    if index.owner != user.id {
+        return Err(Error::Forbidden);
+    }
+
+    Ok(Json(index))
 }

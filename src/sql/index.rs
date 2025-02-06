@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user_index", id = id, insertable, deletable)]
 pub struct UserIndex {
-    #[ormx(default)]
+    #[ormx(default, get_one)]
     pub id: i32,
     pub owner: i32,
 

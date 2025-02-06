@@ -1,6 +1,8 @@
+use ormx::Insert;
+
 use crate::http::auth::AuthUser;
 use crate::http::common::*;
-use crate::sql::{Icon, UserList};
+use crate::sql::{Icon, InsertUserList, UserList};
 
 #[derive(Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
@@ -17,27 +19,11 @@ pub async fn create_list(
 ) -> Result<Json<UserList>> {
     body.validate()?;
 
-    let query = sqlx::query_as!(
-        UserList,
-        r#"
-        INSERT INTO user_list (owner, title, description, icon)
-        VALUES ($1, $2, $3, $4)
-        RETURNING 
-            id,
-            owner,
-            title,
-            description,
-            icon as "icon:Icon",
-            created_at,
-            updated_at
-        "#,
-        user.id,
-        body.title,
-        body.description,
-        body.icon as _
-    )
-    .fetch_one(&state.pool)
-    .await?;
-
+    let query = InsertUserList{
+        owner: user.id,
+        title: body.title,
+        description: body.description,
+        icon: Some(body.icon),
+    }.insert(&state.pool).await?;
     Ok(Json(query))
 }
