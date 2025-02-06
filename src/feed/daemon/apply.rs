@@ -1,21 +1,23 @@
 use chrono::Utc;
+use ormx::{Insert, Table};
 
 use crate::{
     feed::parser::feed_item::ParsedFeedItem,
-    sql::{Feed, FeedItem},
+    sql::{Feed, FeedItem, InsertFeedItem},
 };
 
 use super::update::FeedUpdate;
 
 pub async fn apply_feed_update(
-    pool: &sqlx::PgPool,
+    db: &sqlx::PgPool,
     feed: &Feed,
     feed_update: &FeedUpdate,
 ) -> Result<(), sqlx::Error> {
+    let mut tx = db.begin().await?;
+
     let mut did_update_items = false;
-    // TODO: fetch only the items in the update
     if let Some(items) = feed_update.items.as_ref() {
-        did_update_items = apply_feed_items_update(pool, feed, feed_update, items).await?;
+        did_update_items = apply_feed_items_update(&mut *tx, feed.id, items).await?;
     }
 
     let updated_at = if did_update_items {
@@ -24,6 +26,7 @@ pub async fn apply_feed_update(
         feed.updated_at
     };
 
+    // TODO: rewrite with ormx
     sqlx::query!(
         r#"
         UPDATE feed
@@ -73,52 +76,51 @@ pub async fn apply_feed_update(
             .unwrap_or(feed.successful_fetch_at),
         feed_update.next_fetch_at.unwrap_or(feed.next_fetch_at),
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
+
+    tx.commit().await?;
 
     Ok(())
 }
 
 pub async fn apply_feed_items_update(
-    pool: &sqlx::PgPool,
-    feed: &Feed,
-    feed_update: &FeedUpdate,
-    feed_items: &[ParsedFeedItem],
+    db: impl sqlx::Executor<'_, Database = ormx::Db>,
+    feed_id: i32,
+    items: &[ParsedFeedItem],
 ) -> Result<bool, sqlx::Error> {
-    Ok(false)
+    // TODO: fetch only the items in the update
+    let existing_items = FeedItem::get_by_feed(db, &feed_id).await?;
+
+    // TODO: does the order of the feed items need to be reversed for insertion?
+    // TODO: do we need to sort on date?
+
+    // Add or update feed items
+    let mut did_update_items = false;
+    for item in items.iter() {
+        let existing_item = existing_items
+            .iter()
+            .find(|existing_item| existing_item.guid == item.guid);
+
+        if let Some(existing_item) = existing_item {
+            let mut existing_item = existing_item.clone();
+            existing_item.merge_with_parsed(item);
+            existing_item.update(db).await?;
+            // TODO: check if items were updated
+        } else {
+            // TODO: set index_in_feed
+            InsertFeedItem::from_parsed(item, feed_id, 0)
+                .insert(db)
+                .await?;
+            did_update_items = true;
+        }
+    }
+
+    // Prune oldest items (by id) to limit the number of items to 1000
+    // TODO: use created_at before using id. should we use updated_at instead?
+    sqlx::query!("DELETE FROM feed_item WHERE id IN (SELECT id FROM feed_item WHERE feed_id = $1 ORDER BY id DESC OFFSET 1000)", feed.id)
+        .execute(db)
+        .await?;
+
+    Ok(did_update_items)
 }
-// let existing_items = sqlx::query_as!(
-//     FeedItem,
-//     r#"
-//         SELECT
-//           id, feed_id, index_in_feed, guid, title, link, description, enclosure as "enclosure: _",
-//           content, categories, comments_link, published_at, created_at, updated_at
-//         FROM feed_item
-//         WHERE feed_id = $1
-//     "#,
-//     feed.id
-// )
-// .fetch_all(pool)
-// .await?;
-//
-// let new_items = feed_update
-//     .items
-//     .as_ref()
-//     .unwrap_or(&Vec::new())
-//     .iter()
-//     .enumerate()
-//     .map(|(index, item)| {
-//         let existing_item = existing_items
-//             .iter()
-//             .find(|existing_item| existing_item.index_in_feed == index);
-//
-//         let existing_item = existing_item.unwrap_or_else(|| {
-//             panic!(
-//                 "Item {} not found in existing items for feed {}",
-//                 index, feed.id
-//             )
-//         });
-//
-//         let new_item = FeedItem {
-//             id: existing_item.id,
-//             feed_id: existing_item.feed

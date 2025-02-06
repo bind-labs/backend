@@ -61,9 +61,8 @@ CREATE TABLE feed_item (
   comments_link text,
   published_at timestamptz,
 
-  language char(2) NOT NULL,
   content text,
-  content_type text NOT NULL,
+  content_type text,
   base_link text,
 
   created_at timestamptz NOT NULL DEFAULT NOW(),

@@ -4,7 +4,7 @@ use sqlx::PgPool;
 
 use crate::{
     feed::parser::{feed_item::ParsedFeedItem, parse_feed_from_response},
-    sql::{FeedFormat, FeedStatus},
+    sql::{Feed, FeedFormat, FeedStatus},
 };
 
 use super::{
@@ -36,10 +36,7 @@ pub struct FeedUpdate {
     pub items: Option<Vec<ParsedFeedItem>>,
 }
 
-pub async fn get_feed_update(
-    fetch: Result<FeedFetch, FeedFetchError>,
-    feed: FeedToUpdate,
-) -> FeedUpdate {
+pub async fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: &Feed) -> FeedUpdate {
     match fetch {
         Ok(FeedFetch::Modified(response)) => {
             let cache_duration = response

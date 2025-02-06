@@ -1,9 +1,9 @@
 mod apply;
 mod fetch;
 mod http;
-mod query;
 mod update;
 
+use apply::apply_feed_update;
 use sqlx::PgPool;
 use std::{sync::Arc, time::Duration};
 use tokio::{
@@ -12,10 +12,9 @@ use tokio::{
 };
 
 use fetch::{build_reqwest_client, fetch_feed};
-use query::get_out_of_date_feeds;
 use update::get_feed_update;
 
-use crate::sql::{FeedFormat, FeedStatus};
+use crate::sql::{Feed, FeedFormat, FeedStatus};
 
 #[derive(Debug, Clone)]
 struct FeedToUpdate {
@@ -68,12 +67,14 @@ impl Daemon {
         let mut handles = Vec::new();
 
         let client = build_reqwest_client();
-        let out_of_date_feeds = get_out_of_date_feeds(pool).await?;
+        let out_of_date_feeds = Feed::get_out_of_date(pool).await?;
 
         for feed in out_of_date_feeds.into_iter() {
             let permit = semaphore.clone().acquire_owned().await.unwrap();
             let client = client.clone();
+            let pool = pool.clone();
             handles.push(tokio::spawn(async move {
+                // HTTP request to get the feed
                 let status = fetch_feed(
                     &client,
                     &feed.link,
@@ -82,7 +83,11 @@ impl Daemon {
                 )
                 .await;
 
-                let update = get_feed_update(status, feed);
+                // Convert result of HTTP request to an update to the database
+                let feed_update = get_feed_update(status, &feed).await;
+
+                // Apply the update to the database
+                apply_feed_update(&pool, &feed, &feed_update).await.unwrap();
 
                 drop(permit);
             }));
