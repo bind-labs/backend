@@ -131,73 +131,26 @@
 //     }
 // }
 
-// impl MaybeAuthUser {
-//     /// If this is `Self(Some(AuthUser))`, return `AuthUser::user_id`
-//     pub fn user_id(&self) -> Option<Uuid> {
-//         self.0.as_ref().map(|auth_user| auth_user.user_id)
-//     }
-// }
-
-// // tower-http has a `RequireAuthorizationLayer` but it's useless for practical applications,
-// // as it only supports matching Basic or Bearer auth with credentials you provide it.
-// //
-// // There's the `::custom()` constructor to provide your own validator but it basically
-// // requires parsing the `Authorization` header by-hand anyway so you really don't get anything
-// // out of it that you couldn't write your own middleware for, except with a bunch of extra
-// // boilerplate.
-// #[async_trait]
-// impl FromRequest for AuthUser {
-//     type Rejection = Error;
-
-//     async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
-//         let ctx: Extension<ApiContext> = Extension::from_request(req)
-//             .await
-//             .expect("BUG: ApiContext was not added as an extension");
-
-//         // Get the value of the `Authorization` header, if it was sent at all.
-//         let auth_header = req
-//             .headers()
-//             .ok_or(Error::Unauthorized)?
-//             .get(AUTHORIZATION)
-//             .ok_or(Error::Unauthorized)?;
-
-//         Self::from_authorization(&ctx, auth_header)
-//     }
-// }
-
-// #[async_trait]
-// impl FromRequest for MaybeAuthUser {
-//     type Rejection = Error;
-
-//     async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
-//         let ctx: Extension<ApiContext> = Extension::from_request(req)
-//             .await
-//             .expect("BUG: ApiContext was not added as an extension");
-
-//         Ok(Self(
-//             // Get the value of the `Authorization` header, if it was sent at all.
-//             req.headers()
-//                 .and_then(|headers| {
-//                     let auth_header = headers.get(AUTHORIZATION)?;
-//                     Some(AuthUser::from_authorization(&ctx, auth_header))
-//                 })
-//                 .transpose()?,
-//         ))
-//     }
-// }
-
-
-
-use axum::{extract::FromRequestParts, http::{request::Parts, StatusCode }, RequestPartsExt};
+use axum::{
+    extract::FromRequestParts,
+    http::{request::Parts, StatusCode},
+    RequestPartsExt,
+};
 use axum_extra::{
     headers::{authorization::Bearer, Authorization},
     TypedHeader,
 };
+use serde::{Deserialize, Serialize};
 
 pub struct AuthUser {
     pub id: i32,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AuthUserClaims {
+    id: i32,
+    exp: i64,
+}
 
 impl<S> FromRequestParts<S> for AuthUser
 where
@@ -207,9 +160,10 @@ where
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         // Extract the Authorization header
-        let auth_header: Option<TypedHeader<Authorization<Bearer>>> =
-            parts.extract().await.map_err(|_| StatusCode::UNAUTHORIZED)?;
-
+        let auth_header: Option<TypedHeader<Authorization<Bearer>>> = parts
+            .extract()
+            .await
+            .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
         if auth_header.is_none() {
             return Err(StatusCode::UNAUTHORIZED);
@@ -218,7 +172,6 @@ where
         // Mock logic: Return a fixed user regardless of the token
         let user = AuthUser { id: 42 };
 
-        // You can log the token or perform other mock operations here
         if let Some(TypedHeader(Authorization(bearer))) = auth_header {
             println!("Mock Auth: Received token: {}", bearer.token());
         }

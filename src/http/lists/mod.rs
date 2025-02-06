@@ -10,7 +10,7 @@ mod list;
 
 pub fn router() -> Router<ApiContext> {
     Router::new()
-        .route("/", get(list::list_indexes).put(create::create_list))
+        .route("/", get(list::list_lists).put(create::create_list))
         .route(
             "/index/{id}",
             get(get::get_index).delete(delete::delete_list),

@@ -11,6 +11,8 @@ use nom::{
 };
 use validator::ValidationError;
 
+use crate::sql::FeedItem;
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum SearchExpr {
     Phrase(String),
@@ -153,6 +155,17 @@ pub fn validate_query(query: &str) -> Result<(), ValidationError> {
     }
 }
 
+impl TryFrom<String> for Query {
+    type Error = ValidationError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match parse_query(&value) {
+            Ok((_, query)) => Ok(query),
+            Err(_) => Err(ValidationError::new("Invalid query")),
+        }
+    }
+}
+
 fn expr_to_sql(expr: &SearchExpr, params: &mut Vec<String>) -> (String, Vec<String>) {
     match expr {
         SearchExpr::Word(word) => {
@@ -232,6 +245,7 @@ fn expr_to_sql(expr: &SearchExpr, params: &mut Vec<String>) -> (String, Vec<Stri
 }
 
 impl Query {
+    /// TODO: Think about this to_sql behavior more, especially now that we have adopted
     pub fn to_sql(&self) -> (String, Vec<String>) {
         let mut params = Vec::new();
         let conditions: Vec<String> = self
