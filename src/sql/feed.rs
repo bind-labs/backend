@@ -1,3 +1,4 @@
+use mockito::ServerGuard;
 use serde::{Deserialize, Serialize};
 
 use crate::feed::{daemon::FeedUpdate, parser::feed_item::ParsedFeedItem};
@@ -39,6 +40,7 @@ impl FeedFormat {
 #[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
 #[ormx(table = "feed", id = id, insertable, deletable)]
 pub struct Feed {
+    #[ormx(default)]
     pub id: i32,
     #[ormx(custom_type)]
     pub status: FeedStatus,
@@ -50,6 +52,8 @@ pub struct Feed {
     pub title: String,
     pub description: String,
     pub icon: Option<String>,
+    pub language: Option<String>,
+
     #[ormx(by_ref)]
     pub skip_hours: Vec<i32>,
     #[ormx(by_ref)]
@@ -85,6 +89,8 @@ impl Feed {
                 title,
                 description,
                 icon,
+                language,
+
                 skip_hours,
                 skip_days_of_week,
                 ttl_in_minutes,
@@ -128,6 +134,32 @@ impl Feed {
             .successful_fetch_at
             .unwrap_or(self.successful_fetch_at);
         self.next_fetch_at = update.next_fetch_at.unwrap_or(self.next_fetch_at);
+    }
+}
+
+impl InsertFeed {
+    pub fn from_mockito(server: &ServerGuard, date: chrono::DateTime<chrono::Utc>) -> Self {
+        InsertFeed {
+            status: FeedStatus::Active,
+            format: FeedFormat::Rss,
+            link: server.url().to_string(),
+            domain: Some(server.host_with_port().to_string()),
+            title: "Hello World".to_string(),
+            description: "This is a test feed".to_string(),
+            icon: None,
+            language: None,
+
+            skip_hours: Vec::new(),
+            skip_days_of_week: Vec::new(),
+            ttl_in_minutes: None,
+            etag: None,
+
+            created_at: date,
+            updated_at: date,
+            fetched_at: date,
+            successful_fetch_at: date,
+            next_fetch_at: date,
+        }
     }
 }
 

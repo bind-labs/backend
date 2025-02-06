@@ -134,7 +134,7 @@ pub fn get_next_fetch_time(feed: &Feed, cache_duration: Option<Duration>) -> Nex
     // 6 days, update every 30 minutes
     // ...
     // NOTE: `updated_at` is the time since we got new content or content was updated
-    let time_since_update: Duration = feed.updated_at.signed_duration_since(Utc::now());
+    let time_since_update: Duration = Utc::now().signed_duration_since(feed.updated_at);
     let desired_time_until_update = Duration::minutes(time_since_update.num_days() * 5);
 
     // Respect the TTL if set and the cache header

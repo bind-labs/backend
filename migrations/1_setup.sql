@@ -20,7 +20,7 @@ CREATE TABLE feed (
   title text NOT NULL,
   description text NOT NULL,
   icon text,
-  language char(2) NOT NULL, -- ISO 639-1 code
+  language char(2), -- ISO 639-1 code
 
   skip_hours integer[24] NOT NULL DEFAULT '{}', -- 0 - 23
   skip_days_of_week integer[7] NOT NULL DEFAULT '{}', -- 0 = Sunday, 1 = Monday, ...

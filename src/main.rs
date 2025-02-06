@@ -14,7 +14,6 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use backend::feed::daemon::Daemon;
 use backend::http::{self, common::ApiContext};
 
-
 #[tokio::main]
 async fn main() {
     tracing_subscriber::registry()
