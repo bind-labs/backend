@@ -94,35 +94,53 @@ pub async fn apply_feed_items_update(
     // TODO: fetch only the items in the update
     let existing_items = FeedItem::get_by_feed(db, &feed_id).await?;
 
-    // TODO: does the order of the feed items need to be reversed for insertion?
-    // TODO: do we need to sort on date?
-
     // Add or update feed items
     let mut did_update_items = false;
-    for item in items.iter() {
+    let now = Utc::now();
+
+    // Reverse the order so that most recent items have the highest `id` when inserted
+    // into the database
+    let mut items = items.iter().enumerate().take(1000).collect::<Vec<_>>();
+    items.reverse();
+
+    for (idx, item) in items.into_iter() {
         let existing_item = existing_items
             .iter()
             .find(|existing_item| existing_item.guid == item.guid);
 
+        // Update an existing item
         if let Some(existing_item) = existing_item {
-            let mut existing_item = existing_item.clone();
-            existing_item.merge_with_parsed(item);
-            existing_item.update(&mut *tx).await?;
-            // TODO: check if items were updated
+            let mut edited_item = existing_item.clone();
+            edited_item.merge_with_parsed(item);
+            edited_item.index_in_feed = idx as i32;
+
+            // Only apply if we made changes to the item
+            if &edited_item != existing_item {
+                did_update_items = true;
+
+                edited_item.updated_at = now;
+                edited_item.update(&mut *tx).await?;
+            }
+
+        // Insert a new item
         } else {
-            // TODO: set index_in_feed
-            InsertFeedItem::from_parsed(item, feed_id, 0)
+            InsertFeedItem::from_parsed(item, feed_id, idx as i32, now)
                 .insert(&mut *tx)
                 .await?;
             did_update_items = true;
         }
     }
 
-    // Prune oldest items (by id) to limit the number of items to 1000
-    // TODO: use created_at before using id. should we use updated_at instead?
-    sqlx::query!("DELETE FROM feed_item WHERE id IN (SELECT id FROM feed_item WHERE feed_id = $1 ORDER BY id DESC OFFSET 1000)", feed_id)
-        .execute(&mut *tx)
-        .await?;
+    // Prune oldest items (by updated_at and then by id) to limit the number of items to 1000
+    sqlx::query!(
+        r#"
+        DELETE FROM feed_item WHERE id IN
+            (SELECT id FROM feed_item WHERE feed_id = $1 ORDER BY updated_at, id DESC OFFSET 1000)
+        "#,
+        feed_id
+    )
+    .execute(&mut *tx)
+    .await?;
 
     Ok(did_update_items)
 }

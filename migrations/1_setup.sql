@@ -71,6 +71,7 @@ CREATE TABLE feed_item (
 CREATE INDEX feed_item_feed_id ON feed_item (feed_id);
 CREATE INDEX feed_item_link ON feed_item (link);
 CREATE INDEX feed_item_index_in_feed ON feed_item (index_in_feed DESC);
+CREATE INDEX feed_item_updated_at ON feed_item (updated_at DESC);
 
 CREATE TABLE feed_item_parsed (
   id bigserial PRIMARY KEY,

@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, Utc};
+use chrono::{DateTime, Utc};
 
 use crate::{feed::json::JsonFeed, sql::FeedFormat};
 

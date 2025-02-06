@@ -1,4 +1,3 @@
-use ormx::Insert;
 use serde::{Deserialize, Serialize};
 
 use crate::feed::{daemon::FeedUpdate, parser::feed_item::ParsedFeedItem};
@@ -142,7 +141,7 @@ pub struct FeedItemEnclosure {
 }
 
 /// Represent a single feed item in the database
-#[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
+#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
 #[ormx(table = "feed_item", id = id, insertable, deletable)]
 pub struct FeedItem {
     #[ormx(default)]
@@ -165,9 +164,7 @@ pub struct FeedItem {
     pub content: Option<String>,
     pub content_type: Option<String>,
     pub base_link: Option<String>,
-    #[ormx(default)]
     pub created_at: chrono::DateTime<chrono::Utc>,
-    #[ormx(default, set)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -179,13 +176,18 @@ impl FeedItem {
         self.enclosure = parsed.enclosure.clone().or(self.enclosure.clone());
         self.categories = parsed.categories.clone();
         self.comments_link = parsed.comments_link.clone().or(self.comments_link.clone());
-        self.published_at = parsed.published_at.clone().or(self.published_at);
+        self.published_at = parsed.published_at.or(self.published_at);
         self.content = parsed.content.clone();
     }
 }
 
 impl InsertFeedItem {
-    pub fn from_parsed(item: &ParsedFeedItem, feed_id: i32, index_in_feed: i32) -> Self {
+    pub fn from_parsed(
+        item: &ParsedFeedItem,
+        feed_id: i32,
+        index_in_feed: i32,
+        now: chrono::DateTime<chrono::Utc>,
+    ) -> Self {
         Self {
             feed_id,
             index_in_feed,
@@ -196,10 +198,12 @@ impl InsertFeedItem {
             enclosure: item.enclosure.clone(),
             categories: item.categories.clone(),
             comments_link: item.comments_link.clone(),
-            published_at: item.published_at.clone(),
+            published_at: item.published_at,
             content: item.content.clone(),
             content_type: None,
             base_link: None,
+            created_at: now,
+            updated_at: now,
         }
     }
 }

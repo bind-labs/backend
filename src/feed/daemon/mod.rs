@@ -16,25 +16,7 @@ use tokio::{
 use fetch::{build_reqwest_client, fetch_feed};
 use update::get_feed_update;
 
-use crate::sql::{Feed, FeedFormat, FeedStatus};
-
-#[derive(Debug, Clone)]
-struct FeedToUpdate {
-    pub id: i32,
-    pub status: FeedStatus,
-    pub format: FeedFormat,
-    pub link: String,
-
-    pub skip_hours: Vec<i32>,
-    pub skip_days_of_week: Vec<i32>,
-    pub ttl_in_minutes: Option<i32>,
-    pub etag: Option<String>,
-
-    pub updated_at: chrono::DateTime<chrono::Utc>,
-    pub fetched_at: chrono::DateTime<chrono::Utc>,
-    pub successful_fetch_at: chrono::DateTime<chrono::Utc>,
-    pub next_fetch_at: chrono::DateTime<chrono::Utc>,
-}
+use crate::sql::Feed;
 
 pub struct Daemon {
     task: JoinHandle<()>,

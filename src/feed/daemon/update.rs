@@ -1,6 +1,5 @@
 use chrono::{Duration, Utc};
 use reqwest::Url;
-use sqlx::PgPool;
 
 use crate::{
     feed::parser::{feed_item::ParsedFeedItem, parse_feed_from_response},
@@ -10,7 +9,6 @@ use crate::{
 use super::{
     fetch::{FeedFetch, FeedFetchError},
     http::{parse_cache_control_max_age, parse_etag},
-    FeedToUpdate,
 };
 
 #[derive(Debug, Default)]
@@ -121,22 +119,6 @@ pub async fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: &Fe
             ..get_next_fetch_time(&feed, None).into()
         },
     }
-}
-
-pub async fn update_feed_link(pool: &PgPool, feed_id: i32, link: &str) -> Result<(), sqlx::Error> {
-    sqlx::query!(
-        r#"
-        UPDATE feed
-        SET link = $1
-        WHERE id = $2
-        "#,
-        link,
-        feed_id,
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
 }
 
 pub fn get_next_fetch_time(feed: &Feed, cache_duration: Option<Duration>) -> NextUpdate {

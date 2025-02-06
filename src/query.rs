@@ -247,6 +247,8 @@ impl Query {
         (conditions.join(" AND "), params)
     }
 }
+
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
