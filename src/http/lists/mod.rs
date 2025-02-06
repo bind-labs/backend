@@ -13,7 +13,7 @@ pub fn router() -> Router<ApiContext> {
         .route("/", get(list::list_indexes).put(create::create_list))
         .route(
             "/index/{id}",
-            get(get::get_index).delete(delete::delete_index),
+            get(get::get_index).delete(delete::delete_list),
         )
 }
 
