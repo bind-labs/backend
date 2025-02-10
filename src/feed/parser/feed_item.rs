@@ -1,3 +1,5 @@
+use chrono::DateTime;
+
 use crate::{feed::json::JsonFeedItem, sql::FeedItemEnclosure};
 
 use super::ParsedFeedCreationError;
@@ -26,7 +28,7 @@ impl TryFrom<rss::Item> for ParsedFeedItem {
             .or(value.title())
             .or(value.description())
             .map(|val| val.to_string())
-            .ok_or_else(|| ParsedFeedCreationError::RssFeedParsingError)?;
+            .ok_or(ParsedFeedCreationError::MissingGuidError)?;
 
         // if title is not present then use description as title
         // as per rss spec one of the title or description should be present
@@ -34,13 +36,22 @@ impl TryFrom<rss::Item> for ParsedFeedItem {
             .title()
             .or(value.description())
             .map(|val| val.to_string())
-            .ok_or_else(|| ParsedFeedCreationError::RssFeedParsingError)?;
+            .ok_or(ParsedFeedCreationError::MissingGuidError)?;
 
         let enclosure = value.enclosure().map(|enclosure| FeedItemEnclosure {
             url: enclosure.url.clone(),
             length: enclosure.length.clone().parse::<i32>().unwrap_or(0),
             mime_type: enclosure.mime_type.clone(),
         });
+
+        let published_at = match value.pub_date {
+            Some(pub_date) => Some(
+                DateTime::parse_from_rfc2822(&pub_date)
+                    .map(|date| date.to_utc())
+                    .map_err(|_| ParsedFeedCreationError::InvalidDateError(pub_date))?,
+            ),
+            _ => None,
+        };
 
         Ok(Self {
             guid,
@@ -51,11 +62,7 @@ impl TryFrom<rss::Item> for ParsedFeedItem {
             content: value.content.map(|content| content.to_string()),
             categories: Vec::new(),
             comments_link: value.comments.map(|comments| comments.to_string()),
-            published_at: value
-                .pub_date
-                .map(|date| date.parse::<chrono::DateTime<chrono::Utc>>())
-                .transpose()
-                .map_err(|_| ParsedFeedCreationError::RssFeedParsingError)?,
+            published_at,
         })
     }
 }

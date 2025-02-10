@@ -1,0 +1,16 @@
+<rss version="2.0">
+	<channel>
+		<title>Hacker News</title>
+		<link>https://news.ycombinator.com/</link>
+		<description>Links for the intellectually curious, ranked by readers.</description>
+		<item>
+			<title>A Brief History of Code Signing at Mozilla</title>
+			<link>https://hearsum.ca/posts/history-of-code-signing-at-mozilla/</link>
+			<pubDate>Fri, 07 Feb 2025 17:51:49 +0000</pubDate>
+			<comments>https://news.ycombinator.com/item?id=42975436</comments>
+			<description>
+				<![CDATA[<a href="https://news.ycombinator.com/item?id=42975436">Comments</a>]]>
+			</description>
+		</item>
+	</channel>
+</rss>

@@ -3,10 +3,11 @@ use reqwest::Url;
 
 use crate::{
     feed::parser::{feed_item::ParsedFeedItem, parse_feed_from_response},
-    sql::{Feed, FeedFormat, FeedStatus},
+    sql::{Feed, FeedFormat, FeedStatus, InsertFeed},
 };
 
 use super::{
+    constants::{MAX_TIME_BETWEEN_UPDATES, MIN_TIME_BETWEEN_UPDATES},
     fetch::{FeedFetch, FeedFetchError},
     http::{parse_cache_control_max_age, parse_etag},
 };
@@ -50,12 +51,12 @@ pub async fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: &Fe
                 .updated_at
                 .map(|updated_at| updated_at > feed.successful_fetch_at)
                 .unwrap_or(false);
-            if feed.etag == etag || updated_since {
+            if (feed.etag.is_some() && feed.etag == etag) || updated_since {
                 return FeedUpdate {
                     etag,
                     fetched_at: Some(Utc::now()),
                     successful_fetch_at: Some(Utc::now()),
-                    ..get_next_fetch_time(&feed, cache_duration).into()
+                    ..get_next_fetch_time(feed, cache_duration).into()
                 };
             }
 
@@ -76,7 +77,7 @@ pub async fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: &Fe
 
                 items: Some(parsed_feed.items),
 
-                ..get_next_fetch_time(&feed, cache_duration).into()
+                ..get_next_fetch_time(feed, cache_duration).into()
             }
         }
 
@@ -143,15 +144,12 @@ pub fn get_next_fetch_time(feed: &Feed, cache_duration: Option<Duration>) -> Nex
         .map(|mins| Duration::minutes(mins as i64));
     let min_time_until_update = cache_duration
         .or(ttl_duration)
-        .unwrap_or(Duration::minutes(15))
-        .min(Duration::minutes(15));
-
-    // Cap at 1 day
-    let max_time_until_update = Duration::days(1);
-
+        .unwrap_or(MIN_TIME_BETWEEN_UPDATES)
+        .min(MIN_TIME_BETWEEN_UPDATES);
     let time_until_update = min_time_until_update
         .max(desired_time_until_update)
-        .min(max_time_until_update);
+        .min(MAX_TIME_BETWEEN_UPDATES);
+
     NextUpdate::Time(Utc::now() + time_until_update)
 }
 

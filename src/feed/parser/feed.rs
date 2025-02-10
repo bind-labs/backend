@@ -2,11 +2,13 @@ use chrono::{DateTime, Utc};
 
 use crate::{feed::json::JsonFeed, sql::FeedFormat};
 
-use super::{feed_item::ParsedFeedItem, ParsedFeedCreationError};
+use super::{feed_item::ParsedFeedItem, utils::domain_from_link, ParsedFeedCreationError};
 
+#[derive(Debug, Clone)]
 pub struct ParsedFeed {
     pub format: FeedFormat,
     pub link: String,
+    pub domain: Option<String>,
     pub title: String,
     pub description: String,
     pub icon: Option<String>,
@@ -54,7 +56,8 @@ impl TryFrom<rss::Channel> for ParsedFeed {
 
         Ok(Self {
             format: FeedFormat::Rss,
-            link: value.link,
+            link: value.link.clone(),
+            domain: domain_from_link(&value.link),
             title: value.title,
             description: value.description,
             icon: value.image.as_ref().map(|image| image.url.clone()),
@@ -80,7 +83,8 @@ impl TryFrom<atom_syndication::Feed> for ParsedFeed {
         }
         Ok(Self {
             format: FeedFormat::Atom,
-            link: value.id,
+            link: value.id.clone(),
+            domain: domain_from_link(&value.id),
             title: value.title.value,
             description: value
                 .subtitle
@@ -103,12 +107,16 @@ impl TryFrom<JsonFeed> for ParsedFeed {
         for item in value.items {
             items.push(ParsedFeedItem::try_from(item)?);
         }
+
+        let link = value
+            .feed_url
+            .or(value.home_page_url)
+            .ok_or(ParsedFeedCreationError::JsonFeedParsingError)?;
+
         Ok(Self {
             format: FeedFormat::Json,
-            link: value
-                .feed_url
-                .or(value.home_page_url)
-                .ok_or(ParsedFeedCreationError::JsonFeedParsingError)?,
+            link: link.clone(),
+            domain: domain_from_link(&link),
             title: value.title,
             description: value.description.unwrap_or_default(),
             icon: value.icon,

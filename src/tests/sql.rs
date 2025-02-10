@@ -3,6 +3,7 @@ use std::ops::Deref;
 use pgtemp::PgTempDB;
 use sqlx::postgres::PgPoolOptions;
 
+#[allow(dead_code)]
 pub struct TempDB(sqlx::PgPool, PgTempDB);
 
 impl TempDB {

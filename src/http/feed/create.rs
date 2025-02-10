@@ -1,4 +1,7 @@
-use crate::feed::parser::feed::ParsedFeed;
+use axum::http;
+use axum::response::IntoResponse;
+
+use crate::feed::daemon::Daemon;
 use crate::http::common::*;
 use crate::sql::FeedFormat;
 
@@ -13,26 +16,10 @@ pub struct CreateFeedRequest {
 pub async fn create_feed(
     State(state): State<ApiContext>,
     Json(body): Json<CreateFeedRequest>,
-) -> Result<()> {
+) -> Result<impl IntoResponse> {
     body.validate()?;
 
-    let feed_string = state
-        .reqwest_client
-        .get(&body.link)
-        .send()
-        .await?
-        .text()
-        .await?;
+    let feed = Daemon::create_feed(&state.pool, &body.link).await?;
 
-    let _parsed_feed = match body.format {
-        FeedFormat::Atom => {
-            ParsedFeed::try_from(atom_syndication::Feed::read_from(feed_string.as_bytes())?)?
-        }
-        FeedFormat::Rss => ParsedFeed::try_from(rss::Channel::read_from(feed_string.as_bytes())?)?,
-        _ => unimplemented!(),
-    };
-
-    // store queries in the database
-
-    todo!("Parse the feed string and save it to the database");
+    Ok((http::StatusCode::CREATED, Json(feed)))
 }

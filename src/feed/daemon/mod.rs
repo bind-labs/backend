@@ -1,12 +1,17 @@
+// TODO: if a feed has its link updated and we already have a feed with that link,
+// we need to delete the old feed and migrate anything pointing to that feed to the existing one
+
 mod apply;
+mod constants;
+mod create;
 mod fetch;
 mod http;
 mod update;
 
-pub use update::FeedUpdate;
-
 use anyhow::Context;
 use apply::apply_feed_update;
+use chrono::Utc;
+use ormx::Insert;
 use sqlx::PgPool;
 use std::{sync::Arc, time::Duration};
 use tokio::{
@@ -14,10 +19,14 @@ use tokio::{
     task::JoinHandle,
 };
 
+use create::get_feed_creation;
+pub use create::FeedCreationError;
+pub use update::FeedUpdate;
+
 use fetch::{build_reqwest_client, fetch_feed};
 use update::get_feed_update;
 
-use crate::sql::Feed;
+use crate::sql::{Feed, InsertFeedItem};
 
 pub struct Daemon {
     task: JoinHandle<()>,
@@ -91,9 +100,8 @@ impl Daemon {
         feed: Feed,
         permit: Option<OwnedSemaphorePermit>,
     ) -> Result<(), anyhow::Error> {
-        let client = build_reqwest_client();
-
         // HTTP request to get the feed
+        let client = build_reqwest_client(false);
         let status = fetch_feed(
             &client,
             &feed.link,
@@ -115,6 +123,29 @@ impl Daemon {
         Ok(())
     }
 
+    pub async fn create_feed(pool: &PgPool, link: &str) -> Result<Feed, FeedCreationError> {
+        // HTTP request to get the feed
+        let client = build_reqwest_client(true);
+        let status = fetch_feed(&client, link, None, None).await;
+
+        // Convert result of HTTP request to a feed creation
+        let (feed_insert, parsed_items) = get_feed_creation(status, link).await?;
+
+        // Insert the feed and items into the database
+        let mut tx = pool.begin().await?;
+
+        let feed = feed_insert.insert(&mut *tx).await?;
+        for item in parsed_items {
+            InsertFeedItem::from_parsed(&item, feed.id, 0, Utc::now())
+                .insert(&mut *tx)
+                .await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(feed)
+    }
+
     pub async fn cancel(self) {
         // TODO: timeout and force cancel
         self.cancel_tx.send(()).unwrap();
@@ -126,7 +157,7 @@ impl Daemon {
 
 #[cfg(test)]
 mod test {
-    use crate::sql::{Feed, InsertFeed};
+    use crate::sql::{Feed, FeedItem, InsertFeed};
     use crate::tests::{dates::*, sql::TempDB};
 
     use super::Daemon;
@@ -262,5 +293,51 @@ mod test {
             updated_feed.next_fetch_at,
             Utc::now() + Duration::minutes(30),
         );
+    }
+
+    #[tokio::test]
+    async fn test_fetch_feed() {
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("GET", "/")
+            .with_header("Content-Type", "application/rss+xml")
+            .with_status(200)
+            .with_body_from_file("tests/feeds/hacker-news-rss.xml")
+            .create();
+
+        let pool = TempDB::new().await;
+
+        let feed = InsertFeed::from_mockito(&server, Utc::now())
+            .insert(&*pool)
+            .await
+            .unwrap();
+
+        Daemon::update_feed((*pool).clone(), feed.clone(), None)
+            .await
+            .unwrap();
+        let updated_feed = Feed::get(&*pool, feed.id).await.unwrap();
+
+        assert_eq!(updated_feed.title, "Hacker News");
+        assert_eq!(
+            updated_feed.description,
+            "Links for the intellectually curious, ranked by readers."
+        );
+
+        let items = FeedItem::get_by_feed(&*pool, &feed.id).await.unwrap();
+        assert_eq!(items.len(), 1);
+
+        // Edit the title to ensure that it updates back to the original
+        let mut item = items[0].clone();
+        assert_eq!(item.title, "A Brief History of Code Signing at Mozilla");
+        item.title = "Hello World".to_string();
+        item.update(&*pool).await.unwrap();
+
+        // Ensure updates don't duplicate items
+        Daemon::update_feed((*pool).clone(), feed.clone(), None)
+            .await
+            .unwrap();
+        let items = FeedItem::get_by_feed(&*pool, &feed.id).await.unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].title, "A Brief History of Code Signing at Mozilla");
     }
 }

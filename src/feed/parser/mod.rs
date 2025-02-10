@@ -7,6 +7,7 @@ use super::{json::JsonFeed, FeedFormat};
 
 pub mod feed;
 pub mod feed_item;
+pub mod utils;
 
 #[derive(Debug, Error)]
 pub enum ParsedFeedCreationError {
@@ -16,6 +17,12 @@ pub enum ParsedFeedCreationError {
     RssFeedParsingError,
     #[error("Error parsing Atom feed item")]
     AtomFeedParsingError,
+
+    #[error("Didn't find a Guid and couldn't derive from properties")]
+    MissingGuidError,
+
+    #[error("Invalid date")]
+    InvalidDateError(String),
 }
 
 pub async fn parse_feed_from_response(
@@ -24,6 +31,7 @@ pub async fn parse_feed_from_response(
     let headers = response.headers().clone();
     let content_type = headers
         .get("content-type")
+        // TODO: guess the content type
         .ok_or_else(|| ParsedFromResponseError::UnknownContentType)
         .and_then(|x| {
             x.to_str()

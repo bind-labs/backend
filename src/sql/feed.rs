@@ -1,7 +1,12 @@
+use chrono::Utc;
 use mockito::ServerGuard;
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
-use crate::feed::{daemon::FeedUpdate, parser::feed_item::ParsedFeedItem};
+use crate::feed::{
+    daemon::FeedUpdate,
+    parser::{feed::ParsedFeed, feed_item::ParsedFeedItem},
+};
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[sqlx(type_name = "feed_status", rename_all = "lowercase")]
@@ -138,6 +143,7 @@ impl Feed {
 }
 
 impl InsertFeed {
+    #[cfg(test)]
     pub fn from_mockito(server: &ServerGuard, date: chrono::DateTime<chrono::Utc>) -> Self {
         InsertFeed {
             status: FeedStatus::Active,
@@ -236,6 +242,33 @@ impl InsertFeedItem {
             base_link: None,
             created_at: now,
             updated_at: now,
+        }
+    }
+}
+
+impl From<ParsedFeed> for InsertFeed {
+    fn from(parsed_feed: ParsedFeed) -> Self {
+        InsertFeed {
+            status: FeedStatus::Active,
+            format: parsed_feed.format,
+            link: parsed_feed.link,
+            domain: parsed_feed.domain,
+
+            title: parsed_feed.title,
+            description: parsed_feed.description,
+            icon: parsed_feed.icon,
+            language: None,
+
+            skip_hours: parsed_feed.skip_hours,
+            skip_days_of_week: parsed_feed.skip_days_of_week,
+            ttl_in_minutes: Some(parsed_feed.ttl_in_minutes),
+            etag: None,
+
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            fetched_at: Utc::now(),
+            successful_fetch_at: Utc::now(),
+            next_fetch_at: Utc::now(),
         }
     }
 }

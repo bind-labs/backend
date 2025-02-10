@@ -5,7 +5,7 @@ use super::http::parse_retry_after;
 
 const USER_AGENT: &str = concat!("Bind/", env!("CARGO_PKG_VERSION"));
 
-pub fn build_reqwest_client() -> reqwest::Client {
+pub fn build_reqwest_client(follow_redirects: bool) -> reqwest::Client {
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
         reqwest::header::ACCEPT,
@@ -20,15 +20,19 @@ pub fn build_reqwest_client() -> reqwest::Client {
     reqwest::Client::builder()
         .default_headers(headers)
         // Don't follow permanent redirects so that we can update the feed URL
-        .redirect(reqwest::redirect::Policy::custom(|attempt| {
-            if attempt.status() == StatusCode::MOVED_PERMANENTLY {
-                attempt.stop()
-            } else if attempt.previous().len() > 5 {
-                attempt.error("too many redirects")
-            } else {
-                attempt.follow()
-            }
-        }))
+        .redirect(if !follow_redirects {
+            reqwest::redirect::Policy::custom(|attempt| {
+                if attempt.status() == StatusCode::MOVED_PERMANENTLY {
+                    attempt.stop()
+                } else if attempt.previous().len() > 5 {
+                    attempt.error("too many redirects")
+                } else {
+                    attempt.follow()
+                }
+            })
+        } else {
+            reqwest::redirect::Policy::limited(20)
+        })
         .build()
         .unwrap()
 }
