@@ -9,17 +9,20 @@ tokio = { version = "1.43.0", features = [
   "rt-multi-thread",
   "signal",
 ] }
-tower-http = { version = "0.6.2", features = ["trace"] }
+
 axum = { version = "0.8.1", features = ["macros"] }
+axum-macros = "0.5.0"
 axum-extra = { version = "0.10.0", features = [
   "typed-header",
   "query",
   "tracing",
 ] }
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tower-http = { version = "0.6.2", features = ["trace"] }
+http-body-util = "0.1.2"
 validator = { version = "0.20.0", features = ["derive"] }
 
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 clap = { version = "4.5.27", features = ["derive", "env"] }
 dotenv = "0.15.0"
 
@@ -34,11 +37,15 @@ reqwest = { version = "0.12.9", default-features = false, features = [
   "brotli",
   "zstd",
 ] }
+
 rss = "2.0.11"
 atom_syndication = "0.12.6"
 scraper = "0.22.0"
 
 serde = "1.0.217"
+serde_json = "1.0.138"
+
+ormx = {version = "0.11.0", features = ["postgres"]}
 sqlx = { version = "0.8.3", features = [
   "runtime-tokio-rustls",
   "any",
@@ -46,22 +53,15 @@ sqlx = { version = "0.8.3", features = [
   "chrono",
 ] }
 
+anyhow = "1.0.95"
 thiserror = "2.0.11"
+
 chrono = { version = "0.4.39", features = ["serde"] }
-serde_json = "1.0.138"
-http-body-util = "0.1.2"
 nom = "8.0.0"
 rand = "0.9.0"
-ormx = {version = "0.11.0", features = ["postgres"]}
-anyhow = "1.0.95"
-mockito = "1.6.1"
-axum-macros = "0.5.0"
 
 [dev-dependencies]
 pgtemp = "0.5.0"
 tower = { version = "0.5.2", features = ["util"] }
-
-[dev-dependencies.cargo-husky]
-version = "1"
-default-features = false
-# features = ["precommit-hook", "run-cargo-fmt", "run-cargo-clippy"]
+mockito = "1.6.1"
+cargo-husky = { version = "1", default-features = false }
