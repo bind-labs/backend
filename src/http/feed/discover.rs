@@ -1,4 +1,5 @@
 use crate::feed::{discover::discover_feed_links, FeedInformation};
+use crate::http::auth::AuthUser;
 use crate::http::common::*;
 
 #[derive(Deserialize, Serialize, Validate)]
@@ -9,6 +10,7 @@ pub struct DiscoverFeedsRequest {
 }
 
 pub async fn discover_feeds(
+    _: AuthUser,
     State(state): State<ApiContext>,
     Json(body): Json<DiscoverFeedsRequest>,
 ) -> Result<Json<Vec<FeedInformation>>> {
@@ -33,6 +35,7 @@ mod test {
     use pgtemp::PgTempDB;
     use sqlx::postgres::PgPoolOptions;
     use tower::ServiceExt;
+
     #[tokio::test]
     #[ignore]
     async fn finds_hacker_news_rss() {

@@ -2,6 +2,7 @@ use axum::http;
 use axum::response::IntoResponse;
 
 use crate::feed::daemon::Daemon;
+use crate::http::auth::AuthUser;
 use crate::http::common::*;
 use crate::sql::FeedFormat;
 
@@ -14,6 +15,7 @@ pub struct CreateFeedRequest {
 }
 
 pub async fn create_feed(
+    _: AuthUser,
     State(state): State<ApiContext>,
     Json(body): Json<CreateFeedRequest>,
 ) -> Result<impl IntoResponse> {
