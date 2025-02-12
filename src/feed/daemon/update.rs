@@ -3,7 +3,7 @@ use reqwest::Url;
 
 use crate::{
     feed::parser::{feed_item::ParsedFeedItem, parse_feed_from_response},
-    sql::{Feed, FeedFormat, FeedStatus, InsertFeed},
+    sql::{Feed, FeedFormat, FeedStatus},
 };
 
 use super::{

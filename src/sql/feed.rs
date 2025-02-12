@@ -272,3 +272,18 @@ impl From<ParsedFeed> for InsertFeed {
         }
     }
 }
+
+#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
+#[ormx(table = "feed_item_parsed", id = id, insertable, deletable)]
+pub struct FeedItemParsed {
+    #[ormx(default)]
+    pub id: i64,
+    #[ormx(get_optional = get_by_feed_item)]
+    pub feed_item_id: i64,
+    pub content: String,
+    pub content_type: String,
+    #[ormx(default)]
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    #[ormx(default)]
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}

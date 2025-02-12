@@ -4,7 +4,7 @@ use crate::{feed::json::JsonFeedItem, sql::FeedItemEnclosure};
 
 use super::ParsedFeedCreationError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParsedFeedItem {
     pub guid: String,
     pub link: Option<String>,
