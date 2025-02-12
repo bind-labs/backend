@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct HistoryItem {
     #[ormx(default)]
     pub id: i32,
+    #[ormx(get_many = get_items_for_user)]
     pub owner: i32,
     /// The id of the feed item this item is referencing
     pub item: i64,

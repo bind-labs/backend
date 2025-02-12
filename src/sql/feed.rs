@@ -1,6 +1,6 @@
 use chrono::Utc;
+#[cfg(test)]
 use mockito::ServerGuard;
-use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 use crate::feed::{

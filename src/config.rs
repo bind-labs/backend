@@ -22,4 +22,8 @@ pub struct Config {
     pub host: String,
     #[arg(long, env)]
     pub port: u16,
+
+    #[cfg(feature = "flaresolverr")]
+    #[arg(long, env)]
+    pub flamesolver_host: String,
 }

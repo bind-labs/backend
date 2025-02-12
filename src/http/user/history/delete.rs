@@ -3,18 +3,18 @@ use ormx::{Delete, Table};
 
 use crate::http::auth::AuthUser;
 use crate::http::common::*;
-use crate::sql::UserList;
+use crate::sql::HistoryItem;
 
-pub async fn delete_list(
+pub async fn delete_history_item(
     user: AuthUser,
     State(state): State<ApiContext>,
     Path(id): Path<i32>,
 ) -> Result<impl IntoResponse> {
-    let index = UserList::get(&state.pool, id).await?;
-    if index.owner != user.id {
+    let item = HistoryItem::get(&state.pool, id).await?;
+    if item.owner != user.id {
         return Err(Error::Forbidden);
     }
 
-    index.delete(&state.pool).await?;
+    item.delete(&state.pool).await?;
     Ok(())
 }

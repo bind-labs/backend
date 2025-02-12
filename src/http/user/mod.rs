@@ -1,5 +1,10 @@
 use axum::Router;
 
-pub fn router() -> Router {
-  todo!("Implement the user router")
+use super::common::ApiContext;
+
+mod history;
+
+pub fn router() -> Router<ApiContext> {
+  Router::new()
+    .nest("/history", history::router())
 }

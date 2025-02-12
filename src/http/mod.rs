@@ -12,11 +12,11 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct Pagination {
-    pub page: u32,
+    pub page: i64,
     #[serde(default = "default_limit")]
-    pub limit: u32,
+    pub limit: i64,
 }
 
-fn default_limit() -> u32 {
+fn default_limit() -> i64 {
     20
 }

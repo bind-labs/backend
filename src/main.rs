@@ -54,6 +54,9 @@ async fn main() {
         .layer(TraceLayer::new_for_http())
         .nest("/api/v1", http::feed::router())
         .nest("/api/v1", http::lists::router())
+        .nest("/api/v1", http::items::router())
+        .nest("/api/v1", http::user::router())
+        .nest("/api/v1", http::index::router())
         .with_state(ApiContext::new(pool.clone()));
 
     let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))

@@ -3,6 +3,10 @@ name = "backend"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+flaresolverr = []
+
 [dependencies]
 tokio = { version = "1.43.0", features = [
   "macros",
@@ -59,9 +63,11 @@ thiserror = "2.0.11"
 chrono = { version = "0.4.39", features = ["serde"] }
 nom = "8.0.0"
 rand = "0.9.0"
+readability-rs = "0.5.0"
 
 [dev-dependencies]
 pgtemp = "0.5.0"
 tower = { version = "0.5.2", features = ["util"] }
 mockito = "1.6.1"
 cargo-husky = { version = "1", default-features = false }
+axum-macros = "0.5.0"

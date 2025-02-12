@@ -76,7 +76,6 @@ CREATE INDEX feed_item_updated_at ON feed_item (updated_at DESC);
 CREATE TABLE feed_item_parsed (
   id bigserial PRIMARY KEY,
   feed_item_id bigint NOT NULL REFERENCES feed_item (id) ON DELETE CASCADE,
-  base text NOT NULL,
   content text NOT NULL,
   content_type text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT NOW(),
