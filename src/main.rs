@@ -1,18 +1,15 @@
-use std::time::Duration;
-
 use axum::Router;
-
-use backend::config::Config;
-use clap::Parser;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use backend::feed::daemon::Daemon;
-use backend::http::{self, common::ApiContext};
+use bind_backend::config::Config;
+use bind_backend::feed::daemon::Daemon;
+use bind_backend::http::{self, common::ApiContext};
 
 #[tokio::main]
 async fn main() {
@@ -31,10 +28,9 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    // This returns an error if the `.env` file doesn't exist, but that's not what we want
-    // since we're not going to use a `.env` file if we deploy this application
+    // Ignore the error when `.env` does not exist
     dotenv::dotenv().ok();
-    let config = Config::parse();
+    let config = Config::new().expect("Failed to parse config");
 
     // Initialize database and run migrations
     let pool = PgPoolOptions::new()
@@ -44,7 +40,10 @@ async fn main() {
         .await
         .expect("Failed to create db pool");
 
-    sqlx::migrate!("./migrations").run(&pool).await.unwrap();
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("Failed while running migrations");
 
     // Start the feed daemon
     let daemon = Daemon::new(pool.clone(), 5);
@@ -52,14 +51,10 @@ async fn main() {
     // Start the API
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
-        .nest("/api/v1", http::feed::router())
-        .nest("/api/v1", http::lists::router())
-        .nest("/api/v1", http::items::router())
-        .nest("/api/v1", http::user::router())
-        .nest("/api/v1", http::index::router())
-        .with_state(ApiContext::new(pool.clone()));
+        .nest("/api/v1", http::router())
+        .with_state(ApiContext::new(pool.clone(), config.clone()));
 
-    let listener = TcpListener::bind(format!("{}:{}", config.host, config.port))
+    let listener = TcpListener::bind(config.host)
         .await
         .expect("Failed to bind to port");
     tracing::info!("listening on {}", listener.local_addr().unwrap());

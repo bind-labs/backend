@@ -2,8 +2,7 @@ use chrono::Duration;
 use reqwest::{Response, StatusCode};
 
 use super::http::parse_retry_after;
-
-const USER_AGENT: &str = concat!("Bind/", env!("CARGO_PKG_VERSION"));
+use crate::constants::USER_AGENT;
 
 pub fn build_reqwest_client(follow_redirects: bool) -> reqwest::Client {
     let mut headers = reqwest::header::HeaderMap::new();

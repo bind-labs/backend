@@ -1,23 +1,5 @@
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "auth_provider", rename_all = "lowercase")]
-pub enum AuthProvider {
-    Google,
-    Github,
-    Apple,
-}
-
-impl From<&str> for AuthProvider {
-    fn from(s: &str) -> Self {
-        match s {
-            "google" => AuthProvider::Google,
-            "github" => AuthProvider::Github,
-            "apple" => AuthProvider::Apple,
-            _ => AuthProvider::Google,
-        }
-    }
-}
 
 /// Represents a user in the database
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
@@ -25,16 +7,66 @@ impl From<&str> for AuthProvider {
 pub struct User {
     #[ormx(default)]
     pub id: i32,
+    #[ormx(get_one = get_by_email)]
     pub email: String,
+    #[ormx(get_one = get_by_username)]
     pub username: String,
-    #[ormx(custom_type, by_ref)]
-    pub providers: Vec<AuthProvider>,
-    pub password_hash: Option<String>,
-    pub passwordless_pub_key: Option<String>,
     #[ormx(by_ref)]
-    pub refresh_tokens: Vec<String>,
+    pub providers: Vec<String>,
+    pub password_hash: Option<String>,
+    #[ormx(default, by_ref)]
+    pub passwordless_pub_key: Vec<String>,
     #[ormx(default)]
     pub created_at: chrono::DateTime<chrono::Utc>,
     #[ormx(default, set)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "user_oauth_client", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum OAuthRedirectClient {
+    Web,
+    Android,
+    IOS,
+}
+
+impl OAuthRedirectClient {
+    pub fn to_uri(&self, config: &crate::config::Config) -> Url {
+        match self {
+            OAuthRedirectClient::Web => config.web_origin.clone(),
+            OAuthRedirectClient::Android => config.android_origin.clone(),
+            OAuthRedirectClient::IOS => config.ios_origin.clone(),
+        }
+        .join("/oauth/callback")
+        .unwrap()
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[ormx(table = "user_oauth_state", id = id, insertable, deletable)]
+pub struct UserOAuthState {
+    #[ormx(default)]
+    pub id: i32,
+    #[ormx(custom_type)]
+    pub client: OAuthRedirectClient,
+    pub provider: String,
+    #[ormx(get_one = get_by_csrf_token)]
+    pub csrf_token: String,
+    pub pkce_verifier: String,
+    #[ormx(default)]
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl UserOAuthState {
+    /// Deletes all user oauth states older than 1 hour
+    pub async fn cleanup_expired(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE FROM user_oauth_state WHERE created_at < $1"#,
+            chrono::Utc::now() - chrono::Duration::hours(1)
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
 }

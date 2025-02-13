@@ -45,5 +45,5 @@ pub async fn search(
 }
 
 pub fn router() -> Router<ApiContext> {
-    Router::new().route("/search", post(search))
+    Router::new().route("/", post(search))
 }

@@ -87,20 +87,30 @@ CREATE INDEX feed_item_parsed_feed_item_id ON feed_item_parsed (feed_item_id);
 ----- User -----
 ----------------
 
-CREATE TYPE auth_provider AS ENUM ('google', 'github', 'apple');
 CREATE TABLE "user" (
   id serial PRIMARY KEY,
 
   email text NOT NULL UNIQUE,
   username text NOT NULL UNIQUE, -- TODO: use as primary key?
-  providers auth_provider[] NOT NULL DEFAULT '{}',
+  providers text[] NOT NULL DEFAULT '{}',
   password_hash text,
-  passwordless_pub_key text,
-  refresh_tokens text[] NOT NULL DEFAULT '{}',
+  passwordless_pub_key text[] NOT NULL DEFAULT '{}',
 
   created_at timestamptz NOT NULL DEFAULT NOW(),
   updated_at timestamptz NOT NULL DEFAULT NOW()
 );
+
+CREATE TYPE user_oauth_client AS ENUM ('web', 'android', 'ios');
+CREATE TABLE user_oauth_state (
+  id serial PRIMARY KEY,
+  client user_oauth_client NOT NULL,
+  provider text NOT NULL,
+  csrf_token text NOT NULL,
+  pkce_verifier text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT NOW()
+);
+CREATE INDEX user_oauth_state_csrf_token ON user_oauth_state (csrf_token);
+CREATE INDEX user_oauth_state_created_at ON user_oauth_state (created_at);
 
 ----------------
 ---- Index -----

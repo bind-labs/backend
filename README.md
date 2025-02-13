@@ -43,6 +43,13 @@ Prefixed under `/api/v1`
 - User `/user`
   - `POST /login`
   - `PUT /register` Register
+  - `/token`
+    - `POST /refresh` Refreshes the token
+    - `GET /status` Checks if the user is logged in and returns the user info
+  - `/oauth`
+    - `GET /providers` List available providers
+    - `GET /authorize?provider=id` Redirects to a provider's authorization page
+    - `GET /callback` Exchanges the code for an access token and returns the user
   - `/:id`
     - `GET/UPDATE /settings`
     - `POST /reset-password`

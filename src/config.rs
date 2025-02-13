@@ -1,29 +1,103 @@
 use clap::Parser;
+use config::{Config as ConfigBuilder, ConfigError, Environment, File};
+use reqwest::Url;
+use serde::Deserialize;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
-/// The configuration parameters for the application.
-///
-/// These can either be passed on the command line, or pulled from environment variables.
-/// The latter is preferred as environment variables are one of the recommended ways to
-/// get configuration from Kubernetes Secrets in deployment.
-///
-/// For development convenience, these can also be read from a `.env` file in the working
-/// directory where the application is started.
-///
-/// See `.env.sample` in the repository root for details.
-#[derive(Parser, Clone)]
+// CLI arguments struct - only for non-OAuth settings
+#[derive(Parser, Debug)]
+pub struct CliArgs {
+    /// Path to config file
+    #[arg(long)]
+    pub config_file: Option<PathBuf>,
+
+    /// Postgres Database URL
+    #[arg(long)]
+    pub database_url: Option<String>,
+
+    /// Host to bind to
+    #[arg(long)]
+    pub host: Option<String>,
+
+    /// Used for OAuth redirects to the Web client
+    #[arg(long)]
+    pub web_origin: Option<String>,
+    /// Used for OAuth redirects to the Android client
+    #[arg(long)]
+    pub android_origin: Option<String>,
+    /// Used for OAuth redirects to the iOS client
+    #[arg(long)]
+    pub ios_origin: Option<String>,
+}
+
+// Main config struct
+#[derive(Debug, Deserialize, Clone)]
 pub struct Config {
-    /// The connection URL for the Postgres database this application should use.
-    /// This should be an instance of cardano-db-sync with `conumed_by_tx_id`
-    /// via the `tx_out.value = 'consumed'` config option.
-    #[arg(long, env)]
+    /// Postgres Database URL
     pub database_url: String,
 
-    #[arg(long, env)]
+    /// Host to bind to
     pub host: String,
-    #[arg(long, env)]
-    pub port: u16,
 
     #[cfg(feature = "flaresolverr")]
-    #[arg(long, env)]
-    pub flamesolver_host: String,
+    pub flaresolverr_host: String,
+
+    /// Used for OAuth redirects to the Web client
+    pub web_origin: Url,
+    /// Used for OAuth redirects to the Android client
+    pub android_origin: Url,
+    /// Used for OAuth redirects to the iOS client
+    pub ios_origin: Url,
+
+    /// Secret to use when signing JWTs
+    pub jwt_secret: String,
+
+    #[serde(default)]
+    pub oauth: HashMap<String, OAuth2ClientConfig>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct OAuth2ClientConfig {
+    pub client_id: String,
+    pub client_secret: String,
+    pub auth_url: String,
+    pub token_url: String,
+    pub jwks_url: String,
+    pub scopes: String,
+}
+
+impl Config {
+    pub fn new() -> Result<Self, ConfigError> {
+        // Parse CLI arguments
+        let cli_args = CliArgs::parse();
+
+        let mut builder = ConfigBuilder::builder();
+
+        // Add config file specified via CLI if provided
+        if let Some(config_path) = cli_args.config_file {
+            builder = builder.add_source(File::with_name(config_path.to_str().unwrap()));
+        }
+
+        // Add environment variables with prefix "BIND_"
+        builder = builder.add_source(
+            Environment::with_prefix("bind")
+                .prefix_separator("_")
+                .separator("__")
+                .list_separator(",")
+                .with_list_parse_key("oauth"),
+        );
+
+        // Override with CLI arguments if provided
+        if let Some(database_url) = cli_args.database_url {
+            builder = builder.set_override("database_url", database_url)?;
+        }
+        if let Some(host) = cli_args.host {
+            builder = builder.set_override("host", host)?;
+        }
+
+        // Build and deserialize the config
+        builder.build()?.try_deserialize()
+    }
+>>>>>>> 3cbefb4 (feat: oauth implementation)
 }

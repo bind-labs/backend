@@ -1,7 +1,8 @@
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
+
 #[cfg(test)]
 use mockito::ServerGuard;
-use serde::{Deserialize, Serialize};
 
 use crate::feed::{
     daemon::FeedUpdate,
@@ -287,3 +288,4 @@ pub struct FeedItemParsed {
     #[ormx(default)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
+
