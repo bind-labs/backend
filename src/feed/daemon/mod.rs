@@ -38,13 +38,13 @@ impl Daemon {
         let (cancel_tx, mut cancel_rx) = oneshot::channel();
 
         let task = tokio::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_secs(15));
+            let mut interval = tokio::time::interval(Duration::from_secs(60));
 
             loop {
                 tokio::select! {
                     _ = &mut cancel_rx => break,
                     _ = interval.tick() => {
-                        tracing::info!("Running feed update with {} concurrent updates", concurrent_updates);
+                        tracing::info!("Running feed update");
                         // TODO: split up the updates into batches and check for cancel each time
                         if let Err(err) = Daemon::update_outdated_feeds(&pool, concurrent_updates).await {
                             tracing::error!("Error in update: {:?}", err);

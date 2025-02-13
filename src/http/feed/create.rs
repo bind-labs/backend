@@ -4,14 +4,12 @@ use axum::response::IntoResponse;
 use crate::feed::daemon::Daemon;
 use crate::http::auth::AuthUser;
 use crate::http::common::*;
-use crate::sql::FeedFormat;
 
 #[derive(Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateFeedRequest {
     #[validate(url)]
     link: String,
-    format: FeedFormat,
 }
 
 pub async fn create_feed(

@@ -11,8 +11,6 @@ use nom::{
 };
 use validator::ValidationError;
 
-use crate::sql::FeedItem;
-
 #[derive(PartialEq, Debug, Clone)]
 pub enum SearchExpr {
     Phrase(String),
