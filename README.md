@@ -36,25 +36,25 @@ Prefixed under `/api/v1`
       - `GET /` List items
       - `PUT /` Create a list
       - `PUT/UPDATE/DELETE /:item_id` Creates/updates/deletes an item in the list
-  - History `/history`
-    - `GET/PUT /` Lists or adds to history
-    - `UPDATE/DELETE /:id`
 
 - User `/user`
-  - `/token`
+  - `/:id`
+    - `GET/UPDATE /settings`
+  - Token `/token`
     - `POST /refresh` Refreshes the token
     - `GET /status` Checks if the user is logged in and returns the user info
-  - `/email`
+  - Email `/email`
     - `POST /verify` Sends a verification email
     - `POST /login`
     - `POST /register` Registers the user
-  - `/oauth`
+    - `POST /reset-password` TODO: magic link instead?
+  - OAuth `/oauth`
     - `GET /providers` List available providers
     - `GET /authorize?provider=id` Redirects to a provider's authorization page
     - `GET /callback` Exchanges the code for an access token and returns the user
-  - `/:id`
-    - `GET/UPDATE /settings`
-    - `POST /reset-password`
+  - History `/history`
+    - `GET/PUT /` Lists or adds to history
+    - `UPDATE/DELETE /:id`
 
 - Search `/search`
   - `GET /:query` How does this work? Postgres full text search. Use feedbin for inspiration
@@ -65,18 +65,18 @@ Prefixed under `/api/v1`
 - [x] Axum template with SQLx
 - [x] Postgres schema
 - [ ] RSS parsing and caching
-  - [ ] Support `Retry-After` header on 429
-  - [ ] Use `If-Modified-Since` header to get 304
-  - [ ] Use `ETag` header to get 304
-  - [ ] Should we look at `max-age`?
-  - [ ] Follow redirect and update link to the feed
+  - [x] Support `Retry-After` header on 429
+  - [x] Use `If-Modified-Since` header to get 304
+  - [x] Use `ETag` header to get 304
+  - [x] Should we look at `max-age`?
+  - [x] Follow redirect and update link to the feed
   - [ ] JSON Feed support using Serde
 - [ ] Website parsing
-- [ ] API Implementation
-  - [ ] Feeds
-  - [ ] Index
+- [x] API Implementation
+  - [x] Feeds
+  - [x] Index
   - [ ] Items
     - [ ] Lists
-  - [ ] Users
-    - [ ] Authentication
+  - [x] Users
+    - [x] Authentication
   - [ ] Search
