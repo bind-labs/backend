@@ -29,6 +29,9 @@ pub enum Error {
     #[error("You are not the owner of this resource")]
     NotOwner,
 
+    #[error("Login failed")]
+    LoginFailed,
+
     #[error(transparent)]
     CreateFeedError(#[from] FeedCreationError),
 
@@ -50,6 +53,7 @@ impl IntoResponse for Error {
             Error::BadRequest(msg) => (http::StatusCode::BAD_REQUEST, msg),
             Error::Conflict(msg) => (http::StatusCode::CONFLICT, msg),
             Error::NotOwner => (http::StatusCode::FORBIDDEN, format!("{}", self)),
+            Error::LoginFailed => (http::StatusCode::UNAUTHORIZED, format!("{}", self)),
 
             Error::WebParserError(_) => (
                 http::StatusCode::INTERNAL_SERVER_ERROR,

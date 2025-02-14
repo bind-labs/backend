@@ -41,11 +41,13 @@ Prefixed under `/api/v1`
     - `UPDATE/DELETE /:id`
 
 - User `/user`
-  - `POST /login`
-  - `PUT /register` Register
   - `/token`
     - `POST /refresh` Refreshes the token
     - `GET /status` Checks if the user is logged in and returns the user info
+  - `/email`
+    - `POST /verify` Sends a verification email
+    - `POST /login`
+    - `POST /register` Registers the user
   - `/oauth`
     - `GET /providers` List available providers
     - `GET /authorize?provider=id` Redirects to a provider's authorization page

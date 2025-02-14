@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 pub mod auth;
 pub mod config;
 pub mod constants;
@@ -9,4 +11,3 @@ pub mod sql;
 #[cfg(test)]
 pub mod tests;
 pub mod website;
-

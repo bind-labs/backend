@@ -23,23 +23,6 @@ pub struct User {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct SafeUser {
-    pub id: i32,
-    pub email: String,
-    pub username: String,
-}
-
-impl From<User> for SafeUser {
-    fn from(user: User) -> Self {
-        SafeUser {
-            id: user.id,
-            email: user.email,
-            username: user.username,
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "user_oauth_client", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
