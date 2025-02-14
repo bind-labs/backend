@@ -27,7 +27,7 @@ pub async fn create_list_item(
     )?;
 
     if list.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     let query = InsertUserListItem {

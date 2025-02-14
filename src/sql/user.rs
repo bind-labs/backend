@@ -1,8 +1,9 @@
+use rand::{rng, Rng};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 /// Represents a user in the database
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[derive(Clone, Debug, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user", id = id, insertable, deletable)]
 pub struct User {
     #[ormx(default)]
@@ -20,6 +21,23 @@ pub struct User {
     pub created_at: chrono::DateTime<chrono::Utc>,
     #[ormx(default, set)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SafeUser {
+    pub id: i32,
+    pub email: String,
+    pub username: String,
+}
+
+impl From<User> for SafeUser {
+    fn from(user: User) -> Self {
+        SafeUser {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type)]
@@ -68,5 +86,37 @@ impl UserOAuthState {
         .execute(pool)
         .await?;
         Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[ormx(table = "user_email_verification", id = id, insertable, deletable)]
+pub struct UserEmailVerification {
+    #[ormx(default)]
+    pub id: i32,
+    pub email: String,
+    #[ormx(get_one = get_by_code)]
+    pub code: String,
+    #[ormx(default)]
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl UserEmailVerification {
+    /// Deletes all expired email authentications older than 1 hour
+    pub async fn cleanup_expired(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE FROM user_email_verification WHERE created_at < $1"#,
+            chrono::Utc::now() - chrono::Duration::days(1)
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
+
+    pub fn generate_code() -> String {
+        let mut rng = rng();
+        (0..6)
+            .map(|_| rng.random_range(0..=9).to_string())
+            .collect()
     }
 }

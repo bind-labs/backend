@@ -11,7 +11,7 @@ pub async fn get_index(
 ) -> Result<Json<UserIndex>> {
     let index = UserIndex::get(&state.pool, id).await?;
     if index.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     Ok(Json(index))

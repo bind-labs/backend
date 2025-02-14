@@ -112,6 +112,15 @@ CREATE TABLE user_oauth_state (
 CREATE INDEX user_oauth_state_csrf_token ON user_oauth_state (csrf_token);
 CREATE INDEX user_oauth_state_created_at ON user_oauth_state (created_at);
 
+CREATE TABLE user_email_verification (
+  id serial PRIMARY KEY,
+  email text NOT NULL,
+  code text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT NOW()
+);
+CREATE INDEX user_email_verification_code ON user_email_verification (code);
+CREATE INDEX user_email_verification_created_at ON user_email_verification (created_at);
+
 ----------------
 ---- Index -----
 ----------------

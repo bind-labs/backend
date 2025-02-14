@@ -17,7 +17,7 @@ pub async fn get_list_item(
     let item = UserListItem::get(&state.pool, item_id).await?;
 
     if item.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     if item.list != list_id {

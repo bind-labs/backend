@@ -19,7 +19,7 @@ pub async fn update_history_item(
     body.validate()?;
     let mut item = HistoryItem::get(&state.pool, id).await?;
     if item.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     item.progress = body.progress;

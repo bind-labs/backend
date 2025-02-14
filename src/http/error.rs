@@ -2,6 +2,7 @@ use axum::{
     http,
     response::{IntoResponse, Response},
 };
+use lettre::transport::smtp::Error as SmtpError;
 
 use crate::feed::daemon::FeedCreationError;
 
@@ -16,11 +17,17 @@ pub enum Error {
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
 
-    #[error("This operation is forbidden")]
-    Forbidden,
+    #[error("{0}")]
+    Forbidden(String),
 
-    #[error("Bad request: {0}")]
+    #[error("{0}")]
     BadRequest(String),
+
+    #[error("{0}")]
+    Conflict(String),
+
+    #[error("You are not the owner of this resource")]
+    NotOwner,
 
     #[error(transparent)]
     CreateFeedError(#[from] FeedCreationError),
@@ -30,14 +37,19 @@ pub enum Error {
 
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),
+
+    #[error(transparent)]
+    SmtpError(#[from] SmtpError),
 }
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self {
             Error::ValidationError(_) => (http::StatusCode::BAD_REQUEST, format!("{}", self)),
-            Error::Forbidden => (http::StatusCode::FORBIDDEN, format!("{}", self)),
+            Error::Forbidden(msg) => (http::StatusCode::FORBIDDEN, msg),
             Error::BadRequest(msg) => (http::StatusCode::BAD_REQUEST, msg),
+            Error::Conflict(msg) => (http::StatusCode::CONFLICT, msg),
+            Error::NotOwner => (http::StatusCode::FORBIDDEN, format!("{}", self)),
 
             Error::WebParserError(_) => (
                 http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -45,7 +57,10 @@ impl IntoResponse for Error {
             ),
 
             // TODO: log the error in dev mode
-            Error::ReqwestError(_) | Error::DatabaseError(_) | Error::AnyhowError(_) => {
+            Error::ReqwestError(_)
+            | Error::DatabaseError(_)
+            | Error::AnyhowError(_)
+            | Error::SmtpError(_) => {
                 tracing::error!("{:?}", self);
                 (
                     http::StatusCode::INTERNAL_SERVER_ERROR,

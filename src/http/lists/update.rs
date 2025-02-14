@@ -22,7 +22,7 @@ pub async fn update_list(
     body.validate()?;
     let mut index = UserList::get(&state.pool, id).await?;
     if index.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     body.title.map(|title| index.title = title);
@@ -35,5 +35,3 @@ pub async fn update_list(
 
     Ok(Json(index))
 }
-
-

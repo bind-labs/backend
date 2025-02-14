@@ -25,7 +25,7 @@ pub async fn update_index(
     body.validate()?;
     let mut index = UserIndex::get(&state.pool, id).await?;
     if index.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     body.query.map(|query| index.query = query);

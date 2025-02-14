@@ -11,9 +11,6 @@ pub async fn delete_history_item(
     Path(id): Path<i32>,
 ) -> Result<impl IntoResponse> {
     let item = HistoryItem::get(&state.pool, id).await?;
-    if item.owner != user.id {
-        return Err(Error::Forbidden);
-    }
 
     item.delete(&state.pool).await?;
     Ok(())

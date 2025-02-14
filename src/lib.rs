@@ -4,7 +4,9 @@ pub mod constants;
 pub mod feed;
 pub mod http;
 pub mod query;
+pub mod smtp;
 pub mod sql;
-pub mod website;
 #[cfg(test)]
 pub mod tests;
+pub mod website;
+

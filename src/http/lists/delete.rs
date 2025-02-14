@@ -12,7 +12,7 @@ pub async fn delete_list(
 ) -> Result<impl IntoResponse> {
     let index = UserList::get(&state.pool, id).await?;
     if index.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     index.delete(&state.pool).await?;

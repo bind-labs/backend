@@ -1,6 +1,9 @@
 use axum::Router;
+use bind_backend::auth::oauth::{OAuth2Client, OAuth2ClientConfig};
+use bind_backend::smtp::SmtpClient;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
+use std::collections::HashMap;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::signal;
@@ -13,6 +16,10 @@ use bind_backend::http::{self, common::ApiContext};
 
 #[tokio::main]
 async fn main() {
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .unwrap();
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
@@ -48,11 +55,37 @@ async fn main() {
     // Start the feed daemon
     let daemon = Daemon::new(pool.clone(), 5);
 
+    // Create OAuth clients
+    let mut oauth_clients = HashMap::new();
+    for (name, oauth_config) in config.oauth.iter() {
+        oauth_clients.insert(
+            name.clone(),
+            OAuth2Client::new(OAuth2ClientConfig::from_config(
+                oauth_config,
+                name,
+                &config.web_origin,
+            ))
+            .expect("Failed to create OAuth client"),
+        );
+    }
+
+    // Create SMTP client
+    let smtp_client = SmtpClient::new(&config)
+        .await
+        .expect("Failed to create SMTP client");
+
     // Start the API
+    let api_context = ApiContext {
+        pool: pool.clone(),
+        reqwest_client: reqwest::Client::new(),
+        oauth_clients,
+        smtp_client,
+        config: config.clone(),
+    };
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
         .nest("/api/v1", http::router())
-        .with_state(ApiContext::new(pool.clone(), config.clone()));
+        .with_state(api_context);
 
     let listener = TcpListener::bind(config.host)
         .await

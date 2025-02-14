@@ -15,7 +15,7 @@ pub async fn delete_list_item(
         UserListItem::get(&state.pool, item_id)
     )?;
     if list.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
 
     if item.list != list_id {

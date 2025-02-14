@@ -1,12 +1,14 @@
-use axum::{extract::{Path, Query, State}, Json};
+use axum::{
+    extract::{Path, Query, State},
+    Json,
+};
 use ormx::Table;
 
 use crate::{
+    http::common::*,
     http::{auth::AuthUser, common::ApiContext, Pagination},
     sql::HistoryItem,
-    http::common::*,
 };
-
 
 pub async fn get_user_history(
     user: AuthUser,
@@ -31,7 +33,6 @@ pub async fn get_user_history(
     Ok(Json(query))
 }
 
-
 pub async fn get_user_history_item(
     user: AuthUser,
     State(state): State<ApiContext>,
@@ -39,7 +40,7 @@ pub async fn get_user_history_item(
 ) -> Result<Json<HistoryItem>> {
     let item = HistoryItem::get(&state.pool, id).await?;
     if item.owner != user.id {
-        return Err(Error::Forbidden);
+        return Err(Error::NotOwner);
     }
     Ok(Json(item))
 }

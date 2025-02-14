@@ -55,6 +55,11 @@ pub struct Config {
 
     #[serde(default)]
     pub oauth: HashMap<String, OAuth2ClientConfig>,
+
+    /// SMTP URI to use for sending emails
+    pub smtp_uri: String,
+    /// SMTP email that will be used as the sender
+    pub smtp_from: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -99,5 +104,4 @@ impl Config {
         // Build and deserialize the config
         builder.build()?.try_deserialize()
     }
->>>>>>> 3cbefb4 (feat: oauth implementation)
 }
