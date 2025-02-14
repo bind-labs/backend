@@ -1,11 +1,10 @@
-use super::auth::AuthUser;
-use super::Pagination;
-use crate::http::common::*;
-use crate::query::Query as SearchQuery;
-use crate::sql::{FeedItem, SortOrder};
 use axum::routing::post;
 use axum::Router;
 use axum_extra::extract::Query;
+
+use crate::http::common::*;
+use crate::query::Query as SearchQuery;
+use crate::sql::{FeedItem, SortOrder};
 
 #[derive(Deserialize, Validate)]
 pub struct SearchRequest {

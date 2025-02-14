@@ -1,14 +1,5 @@
-use axum::{
-    extract::{Path, Query, State},
-    Json,
-};
-use ormx::Table;
-
-use crate::{
-    http::common::*,
-    http::{auth::AuthUser, common::ApiContext, Pagination},
-    sql::HistoryItem,
-};
+use crate::http::common::*;
+use crate::sql::HistoryItem;
 
 pub async fn get_user_history(
     user: AuthUser,

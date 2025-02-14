@@ -1,5 +1,6 @@
 use crate::http::common::ApiContext;
 use axum::Router;
+
 mod create;
 mod delete;
 mod get;
@@ -12,7 +13,6 @@ pub fn router() -> Router<ApiContext> {
         )
         .route(
             "/{list_id}/item/{item_id}",
-            axum::routing::get(get::get_list_item)
-                .delete(delete::delete_list_item),
+            axum::routing::get(get::get_list_item).delete(delete::delete_list_item),
         )
 }

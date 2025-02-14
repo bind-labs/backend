@@ -1,10 +1,6 @@
-use axum_extra::extract::Query;
-
-use crate::http::auth::AuthUser;
-use crate::http::{common::*, Pagination};
+use crate::http::common::*;
 use crate::sql::Icon;
 use crate::sql::UserList;
-
 
 pub async fn list_lists(
     _user: AuthUser,

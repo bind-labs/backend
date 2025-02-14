@@ -1,8 +1,6 @@
-use crate::http::auth::AuthUser;
 use crate::http::common::*;
 use crate::sql::{FeedItem, FeedItemParsed, InsertFeedItemParsed};
 use crate::website::website::Extractor;
-use ormx::{Insert, Table};
 
 pub async fn get_item(
     _user: AuthUser,
@@ -32,12 +30,13 @@ pub async fn get_parsed(
     let extractor = Extractor::new().await?;
 
     let html = extractor.extract(&url).await?;
-    let parsed = InsertFeedItemParsed { 
+    let parsed = InsertFeedItemParsed {
         feed_item_id: id,
         content: html.content,
         content_type: "text/html".to_string(),
-    }.insert(&state.pool).await?;
-
+    }
+    .insert(&state.pool)
+    .await?;
 
     Ok(Json(parsed))
 }

@@ -1,9 +1,5 @@
-#![allow(unused)]
-
-use crate::http::auth::AuthUser;
 use crate::http::common::*;
 use crate::sql::UserList;
-use ormx::Table;
 
 pub async fn get_index(
     user: AuthUser,

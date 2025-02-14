@@ -1,18 +1,10 @@
-use axum::{extract::State, http, response::IntoResponse, Json};
 use lettre::{
     message::{header::ContentType, Mailbox},
     Address, Message,
 };
-use ormx::Insert;
-use serde::Deserialize;
 
-use crate::{
-    http::{
-        common::ApiContext,
-        error::{Error, Result},
-    },
-    sql::{InsertUserEmailVerification, User, UserEmailVerification},
-};
+use crate::http::common::*;
+use crate::sql::{InsertUserEmailVerification, User, UserEmailVerification};
 
 #[derive(Deserialize)]
 pub struct EmailVerificationRequest {

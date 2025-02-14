@@ -1,6 +1,3 @@
-use ormx::Insert;
-
-use crate::http::auth::AuthUser;
 use crate::http::common::*;
 use crate::sql::{Icon, InsertUserList, UserList};
 
@@ -19,11 +16,13 @@ pub async fn create_list(
 ) -> Result<Json<UserList>> {
     body.validate()?;
 
-    let query = InsertUserList{
+    let query = InsertUserList {
         owner: user.id,
         title: body.title,
         description: body.description,
         icon: Some(body.icon),
-    }.insert(&state.pool).await?;
+    }
+    .insert(&state.pool)
+    .await?;
     Ok(Json(query))
 }

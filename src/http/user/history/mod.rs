@@ -1,5 +1,6 @@
 use crate::http::common::ApiContext;
 use axum::Router;
+
 mod delete;
 mod get;
 mod update;
@@ -13,5 +14,4 @@ pub fn router() -> Router<ApiContext> {
                 .delete(delete::delete_history_item)
                 .patch(update::update_history_item),
         )
-
 }

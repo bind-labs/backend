@@ -1,5 +1,4 @@
 use crate::feed::{discover::discover_feed_links, FeedInformation};
-use crate::http::auth::AuthUser;
 use crate::http::common::*;
 
 #[derive(Deserialize, Serialize, Validate)]

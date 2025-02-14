@@ -1,11 +1,5 @@
-#![allow(unused)]
-use axum::response::IntoResponse;
-
-use crate::http::auth::AuthUser;
 use crate::http::common::*;
 use crate::sql::UserIndex;
-
-use ormx::{Delete, Table};
 
 pub async fn delete_index(
     user: AuthUser,

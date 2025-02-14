@@ -1,15 +1,6 @@
-use axum::{extract::State, Json};
-use ormx::Insert;
-use serde::{Deserialize, Serialize};
-
-use crate::{
-    auth::{jwt::BindJwtToken, password::hash_password},
-    http::{
-        common::ApiContext,
-        error::{Error, Result},
-    },
-    sql::{InsertUser, User, UserEmailVerification},
-};
+use crate::auth::{jwt::BindJwtToken, password::hash_password};
+use crate::http::common::*;
+use crate::sql::{InsertUser, User, UserEmailVerification};
 
 #[derive(Deserialize)]
 pub struct UserRegisterRequest {

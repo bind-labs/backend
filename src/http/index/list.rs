@@ -1,7 +1,4 @@
-use axum_extra::extract::Query;
-
-use crate::http::auth::AuthUser;
-use crate::http::{common::*, Pagination};
+use crate::http::common::*;
 use crate::sql::{Icon, UserIndex};
 
 pub async fn list_indexes(

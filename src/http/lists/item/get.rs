@@ -1,13 +1,5 @@
-use axum::{
-    extract::{Query, State},
-    Json,
-};
-use ormx::Table;
-
-use crate::{
-    http::{auth::AuthUser, common::*, Pagination},
-    sql::UserListItem,
-};
+use crate::http::common::*;
+use crate::sql::UserListItem;
 
 pub async fn get_list_item(
     user: AuthUser,

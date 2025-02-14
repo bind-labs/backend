@@ -1,14 +1,6 @@
-use axum::{extract::State, Json};
-use serde::{Deserialize, Serialize};
-
-use crate::{
-    auth::{jwt::BindJwtToken, password::verify_password},
-    http::{
-        common::ApiContext,
-        error::{Error, Result},
-    },
-    sql::User,
-};
+use crate::auth::{jwt::BindJwtToken, password::verify_password};
+use crate::http::common::*;
+use crate::sql::User;
 
 #[derive(Deserialize)]
 pub struct UserLoginRequest {
