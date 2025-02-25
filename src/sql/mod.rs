@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -57,11 +59,12 @@ impl From<String> for SortOrder {
     }
 }
 
-impl Into<&'static str> for SortOrder {
-    fn into(self) -> &'static str {
-        match self {
-            SortOrder::RecentlyUpdated => "recently_updated",
-            SortOrder::AsIs => "as_is",
-        }
+impl Display for SortOrder {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            SortOrder::RecentlyUpdated => "recently_updated".to_string(),
+            SortOrder::AsIs => "as_is".to_string(),
+        };
+        write!(formatter, "{}", s)
     }
 }

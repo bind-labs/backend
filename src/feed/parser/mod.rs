@@ -46,7 +46,7 @@ pub async fn parse_feed_from_response(
     let body = response
         .bytes()
         .await
-        .map_err(|err| ParsedFromResponseError::CorruptResponseBody(err))?;
+        .map_err(ParsedFromResponseError::CorruptResponseBody)?;
 
     match FeedFormat::from_content_type(content_type) {
         Some(FeedFormat::Rss) => Channel::read_from(body.as_ref())

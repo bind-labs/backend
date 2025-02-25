@@ -22,10 +22,15 @@ pub async fn update_list(
         return Err(Error::NotOwner);
     }
 
-    body.title.map(|title| index.title = title);
-    body.description
-        .map(|description| index.description = Some(description));
-    body.icon.map(|icon| index.icon = Some(icon));
+    if let Some(title) = body.title {
+        index.title = title;
+    }
+    if let Some(description) = body.description {
+        index.description = Some(description);
+    }
+    if let Some(icon) = body.icon {
+        index.icon = Some(icon);
+    }
 
     index.updated_at = chrono::Utc::now();
     index.update(&state.pool).await?;

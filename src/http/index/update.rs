@@ -25,13 +25,21 @@ pub async fn update_index(
         return Err(Error::NotOwner);
     }
 
-    body.query.map(|query| index.query = query);
-    body.sort
-        .map(|sort| index.sort = Into::<&'static str>::into(sort).to_string());
-    body.title.map(|title| index.title = title);
-    body.description
-        .map(|description| index.description = Some(description));
-    body.icon.map(|icon| index.icon = icon);
+    if let Some(query) = body.query {
+        index.query = query;
+    }
+    if let Some(sort) = body.sort {
+        index.sort = sort.to_string();
+    }
+    if let Some(title) = body.title {
+        index.title = title;
+    }
+    if let Some(description) = body.description {
+        index.description = Some(description);
+    }
+    if let Some(icon) = body.icon {
+        index.icon = icon;
+    }
 
     index.updated_at = chrono::Utc::now();
     index.update(&state.pool).await?;

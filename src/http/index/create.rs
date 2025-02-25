@@ -21,11 +21,11 @@ pub async fn create_index(
 ) -> Result<Json<UserIndex>> {
     body.validate()?;
 
-    let sort: &str = body.sort.into();
+    let sort = body.sort.to_string();
     let query = InsertUserIndex {
         owner: user.id,
         query: body.query,
-        sort: sort.to_string(),
+        sort,
         title: body.title,
         description: body.description,
         icon: body.icon,
