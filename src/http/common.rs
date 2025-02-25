@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::{auth::oauth::OAuth2Client, smtp::SmtpClient};
 
-pub use super::auth::AuthUser;
 pub use super::error::{Error, Result};
+pub use crate::auth::user::AuthUser;
 
 pub use axum::{
     extract::{Path, Query, State},

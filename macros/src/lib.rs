@@ -13,7 +13,6 @@ pub fn derive_into_request(input: TokenStream) -> TokenStream {
                 http::Request::builder()
                     .uri(url)
                     .header(http::header::CONTENT_TYPE, "application/json")
-                    .header(http::header::AUTHORIZATION, "Bearer mock")
                     .method(method)
                     .body(serde_json::to_string(&self).unwrap())
                     .unwrap()

@@ -1,4 +1,5 @@
-use crate::auth::{jwt::BindJwtToken, password::hash_password};
+use crate::auth::password::hash_password;
+use crate::auth::user::AuthUserClaims;
 use crate::http::common::*;
 use crate::sql::{InsertUser, User, UserEmailVerification};
 
@@ -49,6 +50,7 @@ pub async fn register(
     .await?;
 
     // Send the token
-    let token = BindJwtToken::user_to_token(&user, &state.jwt_secret).unwrap();
+    let claims: AuthUserClaims = user.into();
+    let token = claims.to_jwt(&state.jwt_secret).unwrap();
     Ok(Json(UserRegisterResponse { token }))
 }

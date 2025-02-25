@@ -29,7 +29,7 @@ pub async fn discover_feeds(
 
 #[cfg(test)]
 mod test {
-    use crate::tests::TestContext;
+    use crate::{sql::FeedFormat, tests::TestContext};
 
     use super::*;
     use axum::http::method::Method;
@@ -49,7 +49,7 @@ mod test {
 
         let feeds: Vec<FeedInformation> = ctx.decode(response).await;
         assert_eq!(feeds.len(), 1);
-        assert_eq!(feeds[0].url.to_string(), "https://news.ycombinator.com/rss");
+        assert_eq!(feeds[0].format, FeedFormat::Rss);
     }
 
     #[tokio::test]
@@ -68,5 +68,6 @@ mod test {
         let feeds: Vec<FeedInformation> = ctx.decode(response).await;
         assert_eq!(feeds.len(), 1);
         assert_eq!(feeds[0].url.to_string(), "https://news.ycombinator.com/rss");
+        assert_eq!(feeds[0].format, FeedFormat::Rss);
     }
 }

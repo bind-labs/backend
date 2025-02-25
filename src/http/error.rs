@@ -26,6 +26,9 @@ pub enum Error {
     #[error("{0}")]
     Conflict(String),
 
+    #[error("You are not authorized to perform this action. Ensure you have provided a valid token in the Authorization header")]
+    Unauthorized,
+
     #[error("You are not the owner of this resource")]
     NotOwner,
 
@@ -49,9 +52,10 @@ impl IntoResponse for Error {
     fn into_response(self) -> Response {
         match self {
             Error::ValidationError(_) => (http::StatusCode::BAD_REQUEST, format!("{}", self)),
-            Error::Forbidden(msg) => (http::StatusCode::FORBIDDEN, msg),
-            Error::BadRequest(msg) => (http::StatusCode::BAD_REQUEST, msg),
-            Error::Conflict(msg) => (http::StatusCode::CONFLICT, msg),
+            Error::Forbidden(msg) | Error::BadRequest(msg) | Error::Conflict(msg) => {
+                (http::StatusCode::FORBIDDEN, msg)
+            }
+            Error::Unauthorized => (http::StatusCode::UNAUTHORIZED, format!("{}", self)),
             Error::NotOwner => (http::StatusCode::FORBIDDEN, format!("{}", self)),
             Error::LoginFailed => (http::StatusCode::UNAUTHORIZED, format!("{}", self)),
 

@@ -1,4 +1,5 @@
-use crate::auth::{jwt::BindJwtToken, password::verify_password};
+use crate::auth::password::verify_password;
+use crate::auth::user::AuthUserClaims;
 use crate::http::common::*;
 use crate::sql::User;
 
@@ -30,10 +31,11 @@ pub async fn login(
         && let Some(ref password_hash) = user.password_hash
         && verify_password(&info.password, password_hash).expect("Failed to verify password")
     {
-        Ok(Json(UserLoginResponse {
-            token: BindJwtToken::user_to_token(&user, &state.jwt_secret)
-                .expect("Failed to create token"),
-        }))
+        let claims: AuthUserClaims = user.into();
+        let token = claims
+            .to_jwt(&state.jwt_secret)
+            .expect("Failed to create token");
+        Ok(Json(UserLoginResponse { token }))
     } else {
         Err(Error::LoginFailed)
     }

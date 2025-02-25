@@ -94,8 +94,7 @@ impl TryFrom<atom_syndication::Entry> for ParsedFeedItem {
         // atom content can either have a value or an src attribute which is a link to the content
         let content = value
             .content
-            .map(|content| content.value.or_else(|| content.src))
-            .flatten();
+            .and_then(|content| content.value.or_else(|| content.src));
 
         Ok(Self {
             guid: value.id.clone(),
@@ -119,16 +118,13 @@ impl TryFrom<JsonFeedItem> for ParsedFeedItem {
             .title
             .or(content.clone())
             .ok_or(ParsedFeedCreationError::JsonFeedParsingError)?;
-        let enclosure = value
-            .attachments
-            .map(|attachments| {
-                attachments.get(0).map(|attachment| FeedItemEnclosure {
-                    url: attachment.url.clone(),
-                    length: attachment.size_in_bytes.unwrap_or_default() as i32,
-                    mime_type: attachment.mime_type.clone(),
-                })
+        let enclosure = value.attachments.and_then(|attachments| {
+            attachments.get(0).map(|attachment| FeedItemEnclosure {
+                url: attachment.url.clone(),
+                length: attachment.size_in_bytes.unwrap_or_default() as i32,
+                mime_type: attachment.mime_type.clone(),
             })
-            .flatten();
+        });
 
         Ok(Self {
             guid: value.id,

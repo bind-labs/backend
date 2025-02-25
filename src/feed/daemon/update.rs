@@ -93,7 +93,7 @@ pub async fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: &Fe
                 etag,
                 fetched_at: Some(Utc::now()),
                 successful_fetch_at: Some(Utc::now()),
-                ..get_next_fetch_time(&feed, cache_duration).into()
+                ..get_next_fetch_time(feed, cache_duration).into()
             }
         }
 
@@ -117,7 +117,7 @@ pub async fn get_feed_update(fetch: Result<FeedFetch, FeedFetchError>, feed: &Fe
         // Update the next fetch time, but don't update last successful fetch time
         _ => FeedUpdate {
             fetched_at: Some(Utc::now()),
-            ..get_next_fetch_time(&feed, None).into()
+            ..get_next_fetch_time(feed, None).into()
         },
     }
 }
@@ -158,9 +158,9 @@ pub enum NextUpdate {
     Broken,
 }
 
-impl Into<FeedUpdate> for NextUpdate {
-    fn into(self) -> FeedUpdate {
-        match self {
+impl From<NextUpdate> for FeedUpdate {
+    fn from(val: NextUpdate) -> Self {
+        match val {
             NextUpdate::Time(time) => FeedUpdate {
                 next_fetch_at: Some(time),
                 ..Default::default()

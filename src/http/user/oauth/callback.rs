@@ -1,4 +1,4 @@
-use crate::auth::jwt::BindJwtToken;
+use crate::auth::user::AuthUserClaims;
 use crate::http::common::*;
 use crate::sql::UserOAuthState;
 
@@ -27,7 +27,8 @@ pub async fn callback(
 
     let user = external_token.create_or_update_user(&state.pool).await?;
 
-    let token = BindJwtToken::user_to_token(&user, &state.jwt_secret).unwrap();
+    let claims: AuthUserClaims = user.into();
+    let token = claims.to_jwt(&state.jwt_secret).unwrap();
 
     Ok(http::Response::builder()
         .status(http::StatusCode::TEMPORARY_REDIRECT)

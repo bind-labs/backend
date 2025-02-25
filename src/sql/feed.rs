@@ -18,7 +18,7 @@ pub enum FeedStatus {
     Broken,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[sqlx(type_name = "feed_format", rename_all = "lowercase")]
 pub enum FeedFormat {
     Atom,
@@ -288,4 +288,3 @@ pub struct FeedItemParsed {
     #[ormx(default)]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
-

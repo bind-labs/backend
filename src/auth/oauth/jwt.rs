@@ -1,12 +1,11 @@
 use fake::{faker::internet::en::Username, Fake};
-use jsonwebtoken::{decode_header, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode_header, DecodingKey, Validation};
 use ormx::{Insert, Table};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::PgPool;
 
+use crate::auth::oauth::OAuth2Client;
 use crate::sql::{InsertUser, User};
-
-use super::oauth::OAuth2Client;
 
 #[derive(Debug, Deserialize)]
 struct ExternalClaims {
@@ -93,32 +92,5 @@ impl ExternalJwtToken {
         .await?;
 
         Ok(user)
-    }
-}
-
-pub struct BindJwtToken {}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BindJwtClaims {
-    exp: i64, // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
-    iat: i64, // Issued at (as UTC timestamp)
-    email: String,
-    username: String,
-}
-
-impl BindJwtToken {
-    pub fn user_to_token(user: &User, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
-        let claims = BindJwtClaims {
-            exp: chrono::Utc::now().timestamp() + 60 * 60 * 24 * 7,
-            iat: chrono::Utc::now().timestamp(),
-            email: user.email.clone(),
-            username: user.username.clone(),
-        };
-
-        encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(secret.as_ref()),
-        )
     }
 }

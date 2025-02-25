@@ -19,23 +19,24 @@ use crate::{
     sql::{InsertUserOAuthState, OAuthRedirectClient, UserOAuthState},
 };
 
+type OAuth2InternalClient = Client<
+    StandardErrorResponse<BasicErrorResponseType>,
+    StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>,
+    StandardTokenIntrospectionResponse<EmptyExtraTokenFields, BasicTokenType>,
+    StandardRevocableToken,
+    StandardErrorResponse<RevocationErrorResponseType>,
+    EndpointSet,
+    EndpointNotSet,
+    EndpointNotSet,
+    EndpointNotSet,
+    EndpointSet,
+>;
+
 #[derive(Debug, Clone)]
 pub struct OAuth2Client {
     config: OAuth2ClientConfig,
     http: reqwest::Client,
-    // TODO: ideally we dont need to define all this
-    client: Client<
-        StandardErrorResponse<BasicErrorResponseType>,
-        StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>,
-        StandardTokenIntrospectionResponse<EmptyExtraTokenFields, BasicTokenType>,
-        StandardRevocableToken,
-        StandardErrorResponse<RevocationErrorResponseType>,
-        EndpointSet,
-        EndpointNotSet,
-        EndpointNotSet,
-        EndpointNotSet,
-        EndpointSet,
-    >,
+    client: OAuth2InternalClient,
 }
 
 impl OAuth2Client {

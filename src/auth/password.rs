@@ -23,6 +23,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_hash_uses_salt() {
+        let password = "my_secure_password";
+        let hash = hash_password(password).unwrap();
+        let hash2 = hash_password(password).unwrap();
+        assert_ne!(hash, hash2);
+    }
+
+    #[test]
     fn test_hash_password() {
         let password = "my_secure_password";
         let hash = hash_password(password).unwrap();
