@@ -1,3 +1,4 @@
 /target
+/macros/target
 .env.local
 .env

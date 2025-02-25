@@ -1,7 +1,10 @@
+use bind_macros::IntoRequest;
+use reqwest::Url;
+
 use crate::feed::{discover::discover_feed_links, FeedInformation};
 use crate::http::common::*;
 
-#[derive(Deserialize, Serialize, Validate)]
+#[derive(Deserialize, Serialize, Validate, IntoRequest)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscoverFeedsRequest {
     #[validate(url)]
@@ -15,64 +18,55 @@ pub async fn discover_feeds(
 ) -> Result<Json<Vec<FeedInformation>>> {
     body.validate()?;
 
-    let html_page = state
-        .reqwest_client
-        .get(body.link)
-        .send()
-        .await?
-        .text()
-        .await?;
+    let url = Url::parse(&body.link).map_err(|_| Error::BadRequest("Invalid URL".to_string()))?;
 
-    Ok(Json(discover_feed_links(&html_page)))
+    let response = state.reqwest_client.get(url.clone()).send().await?;
+    let final_url = response.url().clone(); // We may have redirected, so get the final URL
+    let html_page = response.text().await?;
+
+    Ok(Json(discover_feed_links(&final_url, &html_page)))
 }
 
 #[cfg(test)]
 mod test {
+    use crate::tests::TestContext;
+
     use super::*;
-    use axum::{http::Request, routing::post, Router};
-    use http_body_util::BodyExt;
-    use pgtemp::PgTempDB;
-    use sqlx::postgres::PgPoolOptions;
-    use tower::ServiceExt;
+    use axum::http::method::Method;
 
     #[tokio::test]
-    #[ignore]
     async fn finds_hacker_news_rss() {
         let hacker_news_url = "https://news.ycombinator.com/";
-        let db = PgTempDB::async_new().await;
-        let pool = PgPoolOptions::new()
-            .connect(&db.connection_uri())
-            .await
-            .unwrap();
 
-        let state = ApiContext::new(pool);
-
-        let router = Router::new()
-            .route("/feed/discover", post(discover_feeds))
-            .with_state(state);
-
-        let response = router
-            .oneshot(
-                Request::post("/feed/discover")
-                    .header("content-type", "application/json")
-                    .body(
-                        serde_json::to_string(&DiscoverFeedsRequest {
-                            link: hacker_news_url.to_string(),
-                        })
-                        .unwrap(),
-                    )
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-
+        let ctx = TestContext::new().await;
+        let request = DiscoverFeedsRequest {
+            link: hacker_news_url.to_string(),
+        };
+        let response = ctx
+            .req(request.into_request(Method::POST, "/feed/discover"))
+            .await;
         assert_eq!(response.status(), 200);
-        let response_body = response.into_body().collect().await.unwrap().to_bytes();
-        let feeds = serde_json::from_slice::<Vec<FeedInformation>>(&response_body).unwrap();
 
-        println!("{:?}", feeds);
+        let feeds: Vec<FeedInformation> = ctx.decode(response).await;
+        assert_eq!(feeds.len(), 1);
+        assert_eq!(feeds[0].url.to_string(), "https://news.ycombinator.com/rss");
     }
 
     #[tokio::test]
-    async fn follows_redirects() {}
+    async fn follows_redirects() {
+        let hacker_news_url = "https://hacker.news/";
+
+        let ctx = TestContext::new().await;
+        let request = DiscoverFeedsRequest {
+            link: hacker_news_url.to_string(),
+        };
+        let response = ctx
+            .req(request.into_request(Method::POST, "/feed/discover"))
+            .await;
+        assert_eq!(response.status(), 200);
+
+        let feeds: Vec<FeedInformation> = ctx.decode(response).await;
+        assert_eq!(feeds.len(), 1);
+        assert_eq!(feeds[0].url.to_string(), "https://news.ycombinator.com/rss");
+    }
 }

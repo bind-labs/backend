@@ -1,5 +1,5 @@
-use axum::Router;
 use bind_backend::auth::oauth::{OAuth2Client, OAuth2ClientConfig};
+use bind_backend::http::common::Origins;
 use bind_backend::smtp::SmtpClient;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
@@ -70,22 +70,26 @@ async fn main() {
     }
 
     // Create SMTP client
-    let smtp_client = SmtpClient::new(&config)
+    let smtp_client = SmtpClient::new(&config.smtp_uri, &config.smtp_from)
         .await
         .expect("Failed to create SMTP client");
 
     // Start the API
-    let api_context = ApiContext {
+    let context = ApiContext {
         pool: pool.clone(),
         reqwest_client: reqwest::Client::new(),
         oauth_clients,
         smtp_client,
-        config: config.clone(),
+        origins: Origins {
+            web: config.web_origin.clone(),
+            android: config.android_origin.clone(),
+            ios: config.ios_origin.clone(),
+        },
+        jwt_secret: config.jwt_secret.clone(),
     };
-    let app = Router::new()
+    let app = http::router()
         .layer(TraceLayer::new_for_http())
-        .nest("/api/v1", http::router())
-        .with_state(api_context);
+        .with_state(context);
 
     let listener = TcpListener::bind(config.host)
         .await

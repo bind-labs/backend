@@ -1,7 +1,8 @@
 use crate::http::common::*;
 use crate::sql::{Icon, InsertUserIndex, SortOrder, UserIndex};
+use bind_macros::IntoRequest;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Serialize, Validate, IntoRequest)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateIndexRequest {
     #[validate(custom(function = "crate::query::validate_query"))]
@@ -37,28 +38,26 @@ pub async fn create_index(
 
 #[cfg(test)]
 mod test {
-    use crate::sql::Icon;
+    use crate::{sql::Icon, tests::TestContext};
 
     use super::*;
-    use pgtemp::PgTempDB;
-    use sqlx::postgres::PgPoolOptions;
+
     #[tokio::test]
     #[ignore]
     async fn should_create_index_only_on_valid_query() {
-        let db = PgTempDB::async_new().await;
-        let pool = PgPoolOptions::new()
-            .connect(&db.connection_uri())
-            .await
-            .unwrap();
+        let ctx = TestContext::new().await;
 
-        let _state = ApiContext::new(pool);
-
-        let _create_index = CreateIndexRequest {
+        let create_index = CreateIndexRequest {
             query: "test hello world".to_string(),
             sort: SortOrder::AsIs,
             title: "Hello World".to_string(),
             description: None,
             icon: Icon::get_random_icon(),
         };
+
+        let response = ctx
+            .req(create_index.into_request(http::Method::PUT, "/index"))
+            .await;
+        assert_eq!(response.status(), http::StatusCode::OK);
     }
 }

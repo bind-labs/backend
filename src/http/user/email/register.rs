@@ -49,6 +49,6 @@ pub async fn register(
     .await?;
 
     // Send the token
-    let token = BindJwtToken::user_to_token(&user, &state.config.jwt_secret).unwrap();
+    let token = BindJwtToken::user_to_token(&user, &state.jwt_secret).unwrap();
     Ok(Json(UserRegisterResponse { token }))
 }

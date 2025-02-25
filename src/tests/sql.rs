@@ -4,7 +4,7 @@ use pgtemp::PgTempDB;
 use sqlx::postgres::PgPoolOptions;
 
 #[allow(dead_code)]
-pub struct TempDB(sqlx::PgPool, PgTempDB);
+pub struct TempDB(pub sqlx::PgPool, pub PgTempDB);
 
 impl TempDB {
     pub async fn new() -> Self {

@@ -31,7 +31,7 @@ pub async fn login(
         && verify_password(&info.password, password_hash).expect("Failed to verify password")
     {
         Ok(Json(UserLoginResponse {
-            token: BindJwtToken::user_to_token(&user, &state.config.jwt_secret)
+            token: BindJwtToken::user_to_token(&user, &state.jwt_secret)
                 .expect("Failed to create token"),
         }))
     } else {

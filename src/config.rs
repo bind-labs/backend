@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 // CLI arguments struct - only for non-OAuth settings
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Default)]
 pub struct CliArgs {
     /// Path to config file
     #[arg(long)]
@@ -19,16 +19,6 @@ pub struct CliArgs {
     /// Host to bind to
     #[arg(long)]
     pub host: Option<String>,
-
-    /// Used for OAuth redirects to the Web client
-    #[arg(long)]
-    pub web_origin: Option<String>,
-    /// Used for OAuth redirects to the Android client
-    #[arg(long)]
-    pub android_origin: Option<String>,
-    /// Used for OAuth redirects to the iOS client
-    #[arg(long)]
-    pub ios_origin: Option<String>,
 }
 
 // Main config struct
@@ -74,7 +64,6 @@ pub struct OAuth2ClientConfig {
 
 impl Config {
     pub fn new() -> Result<Self, ConfigError> {
-        // Parse CLI arguments
         let cli_args = CliArgs::parse();
 
         let mut builder = ConfigBuilder::builder();

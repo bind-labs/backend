@@ -27,7 +27,7 @@ pub async fn callback(
 
     let user = external_token.create_or_update_user(&state.pool).await?;
 
-    let token = BindJwtToken::user_to_token(&user, &state.config.jwt_secret).unwrap();
+    let token = BindJwtToken::user_to_token(&user, &state.jwt_secret).unwrap();
 
     Ok(http::Response::builder()
         .status(http::StatusCode::TEMPORARY_REDIRECT)
@@ -35,7 +35,7 @@ pub async fn callback(
             "Location",
             oauth_state
                 .client
-                .to_uri(&state.config)
+                .to_uri(&state.origins)
                 .join(&format!("#token={}", token))
                 .unwrap()
                 .to_string(),

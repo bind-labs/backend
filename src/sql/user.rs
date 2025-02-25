@@ -2,6 +2,8 @@ use rand::{rng, Rng};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
+use crate::http::common::Origins;
+
 /// Represents a user in the database
 #[derive(Clone, Debug, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user", id = id, insertable, deletable)]
@@ -33,11 +35,11 @@ pub enum OAuthRedirectClient {
 }
 
 impl OAuthRedirectClient {
-    pub fn to_uri(&self, config: &crate::config::Config) -> Url {
+    pub fn to_uri(&self, origins: &Origins) -> Url {
         match self {
-            OAuthRedirectClient::Web => config.web_origin.clone(),
-            OAuthRedirectClient::Android => config.android_origin.clone(),
-            OAuthRedirectClient::IOS => config.ios_origin.clone(),
+            OAuthRedirectClient::Web => origins.web.clone(),
+            OAuthRedirectClient::Android => origins.android.clone(),
+            OAuthRedirectClient::IOS => origins.ios.clone(),
         }
         .join("/oauth/callback")
         .unwrap()

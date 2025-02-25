@@ -1,6 +1,7 @@
 // mod daemon;
 pub mod discover;
 
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 pub use crate::sql::FeedFormat;
@@ -10,6 +11,6 @@ pub mod parser;
 
 #[derive(Serialize, Debug, Deserialize)]
 pub struct FeedInformation {
-    pub link: String,
+    pub url: Url,
     pub format: FeedFormat,
 }
