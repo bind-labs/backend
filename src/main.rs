@@ -9,6 +9,7 @@ use tokio::net::TcpListener;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use utoipa_scalar::{Scalar, Servable as ScalarServable};
 
 use bind_backend::config::Config;
 use bind_backend::feed::daemon::Daemon;
@@ -87,9 +88,14 @@ async fn main() {
         },
         jwt_secret: config.jwt_secret.clone(),
     };
-    let app = http::router()
+    let (router, api) = http::router()
         .layer(TraceLayer::new_for_http())
-        .with_state(context);
+        .with_state(context)
+        .split_for_parts();
+
+    let app = router
+        .merge(Scalar::with_url("/scalar", api))
+        .into_make_service();
 
     let listener = TcpListener::bind(config.host)
         .await

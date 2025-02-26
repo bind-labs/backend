@@ -9,20 +9,29 @@ use crate::feed::{
     parser::{feed::ParsedFeed, feed_item::ParsedFeedItem},
 };
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq, utoipa::ToSchema)]
 #[sqlx(type_name = "feed_status", rename_all = "lowercase")]
+/// Status of a feed
 pub enum FeedStatus {
+    /// Feed is active and being updated regularly
     Active,
+    /// Feed is completed (e.g., a podcast series that has ended)
     Completed,
+    /// Feed is temporarily suspended
     Suspended,
+    /// Feed has broken links or cannot be fetched
     Broken,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, PartialEq, utoipa::ToSchema)]
 #[sqlx(type_name = "feed_format", rename_all = "lowercase")]
+/// Format of a feed
 pub enum FeedFormat {
+    /// Atom feed format
     Atom,
+    /// RSS feed format
     Rss,
+    /// JSON feed format
     Json,
 }
 
@@ -43,40 +52,59 @@ impl FeedFormat {
 
 /// Represents a single feed in the database.
 /// Note: This feed can be an RSS, Atom or JSON feed.
-#[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
+#[derive(Clone, Debug, sqlx::FromRow, Deserialize, Serialize, ormx::Table, utoipa::ToSchema)]
 #[ormx(table = "feed", id = id, insertable, deletable)]
 pub struct Feed {
+    /// Unique identifier of the feed
     #[ormx(default)]
     pub id: i32,
+    /// Current status of the feed
     #[ormx(custom_type)]
     pub status: FeedStatus,
+    /// Format of the feed (RSS, Atom, JSON)
     #[ormx(custom_type)]
     pub format: FeedFormat,
+    /// URL of the feed
     pub link: String,
+    /// Domain of the feed (extracted from the URL)
     pub domain: Option<String>,
 
+    /// Title of the feed
     pub title: String,
+    /// Description of the feed
     pub description: String,
+    /// URL to the feed's icon
     pub icon: Option<String>,
+    /// Language of the feed (e.g., "en-us")
     pub language: Option<String>,
 
+    /// Hours when the feed should not be fetched
     #[ormx(by_ref)]
+    #[schema(value_type = Vec<i32>)]
     pub skip_hours: Vec<i32>,
+    /// Days of the week when the feed should not be fetched
     #[ormx(by_ref)]
+    #[schema(value_type = Vec<i32>)]
     pub skip_days_of_week: Vec<i32>,
     /// Minimum time to cache the feed for
     pub ttl_in_minutes: Option<i32>,
     /// ETag header from the last update
     pub etag: Option<String>,
 
+    /// When the feed was created in the system
+    #[schema(format = "date-time")]
     pub created_at: chrono::DateTime<chrono::Utc>,
     /// Time of the last update to the content
+    #[schema(format = "date-time")]
     pub updated_at: chrono::DateTime<chrono::Utc>,
     /// Time of the last fetch
+    #[schema(format = "date-time")]
     pub fetched_at: chrono::DateTime<chrono::Utc>,
     /// Time of the last successful fetch
+    #[schema(format = "date-time")]
     pub successful_fetch_at: chrono::DateTime<chrono::Utc>,
     /// Time to fetch the feed next
+    #[schema(format = "date-time")]
     pub next_fetch_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -170,40 +198,63 @@ impl InsertFeed {
     }
 }
 
-/// Represents an attach media file in a feed item (e.g. an image or audio file)
-#[derive(Clone, Debug, PartialEq, sqlx::Type, Deserialize, Serialize)]
+/// Represents an attached media file in a feed item (e.g. an image or audio file)
+#[derive(Clone, Debug, PartialEq, sqlx::Type, Deserialize, Serialize, utoipa::ToSchema)]
 #[sqlx(type_name = "feed_item_enclosure")]
 pub struct FeedItemEnclosure {
+    /// URL of the media file
     pub url: String,
+    /// Size of the media file in bytes
     pub length: i32,
+    /// MIME type of the media file
     pub mime_type: String,
 }
 
 /// Represent a single feed item in the database
-#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
+#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table, utoipa::ToSchema)]
 #[ormx(table = "feed_item", id = id, insertable, deletable)]
 pub struct FeedItem {
+    /// Unique identifier of the feed item
     #[ormx(default)]
     pub id: i64,
+    /// Globally unique identifier of the item (from the feed)
     pub guid: String,
+    /// ID of the feed this item belongs to
     #[ormx(get_many = get_by_feed)]
     pub feed_id: i32,
+    /// Position of the item in the feed
     pub index_in_feed: i32,
 
+    /// Title of the feed item
     pub title: String,
+    /// Link to the full article
     pub link: Option<String>,
+    /// Summary or description of the item
     pub description: Option<String>,
+    /// Attached media file (if any)
     #[ormx(custom_type, by_ref)]
     pub enclosure: Option<FeedItemEnclosure>,
+    /// Categories or tags for the item
     #[ormx(by_ref)]
+    #[schema(value_type = Vec<String>)]
     pub categories: Vec<String>,
+    /// Link to the comments section
     pub comments_link: Option<String>,
+    /// When the item was published
+    #[schema(format = "date-time")]
     pub published_at: Option<chrono::DateTime<chrono::Utc>>,
 
+    /// Full content of the item
     pub content: Option<String>,
+    /// MIME type of the content
     pub content_type: Option<String>,
+    /// Base URL for relative links in the content
     pub base_link: Option<String>,
+    /// When the item was created in the system
+    #[schema(format = "date-time")]
     pub created_at: chrono::DateTime<chrono::Utc>,
+    /// When the item was last updated
+    #[schema(format = "date-time")]
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 

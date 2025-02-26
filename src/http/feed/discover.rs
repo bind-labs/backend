@@ -1,16 +1,35 @@
 use bind_macros::IntoRequest;
 use reqwest::Url;
+use utoipa::ToSchema;
 
 use crate::feed::{discover::discover_feed_links, FeedInformation};
 use crate::http::common::*;
 
-#[derive(Deserialize, Serialize, Validate, IntoRequest)]
+/// Request to discover feeds from a website URL
+#[derive(Deserialize, Serialize, Validate, IntoRequest, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscoverFeedsRequest {
+    /// URL of the website to discover feeds from
     #[validate(url)]
-    link: String,
+    pub link: String,
 }
 
+/// Discover feeds from a website URL
+#[utoipa::path(
+    post,
+    path = "/discover",
+    tag = "feed",
+    request_body = DiscoverFeedsRequest,
+    responses(
+        (status = 200, description = "Feeds discovered successfully", body = Vec<FeedInformation>),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("jwt" = [])
+    )
+)]
 pub async fn discover_feeds(
     _: AuthUser,
     State(state): State<ApiContext>,

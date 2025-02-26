@@ -1,13 +1,33 @@
 use crate::feed::daemon::Daemon;
 use crate::http::common::*;
+use crate::sql::Feed;
+use utoipa::ToSchema;
 
-#[derive(Deserialize, Validate)]
+/// Request to create a new feed
+#[derive(Deserialize, Validate, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateFeedRequest {
+    /// URL of the feed to create
     #[validate(url)]
-    link: String,
+    pub link: String,
 }
 
+/// Create a new feed
+#[utoipa::path(
+    put,
+    path = "/",
+    tag = "feed",
+    request_body = CreateFeedRequest,
+    responses(
+        (status = 201, description = "Feed created successfully", body = Feed),
+        (status = 400, description = "Invalid request"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("jwt" = [])
+    )
+)]
 pub async fn create_feed(
     _: AuthUser,
     State(state): State<ApiContext>,
