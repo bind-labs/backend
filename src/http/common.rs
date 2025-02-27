@@ -14,7 +14,9 @@ pub use axum::{
 pub use ormx::{Delete, Insert, Patch, Table};
 use reqwest::Url;
 pub use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 pub use validator::Validate;
+use utoipa::IntoParams;
 
 #[derive(Clone)]
 pub struct ApiContext {
@@ -33,7 +35,7 @@ pub struct Origins {
     pub ios: Url,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, ToSchema, IntoParams)]
 pub struct Pagination {
     pub page: i64,
     #[serde(default = "default_limit")]

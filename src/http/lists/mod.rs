@@ -1,5 +1,5 @@
-use axum::routing::get;
-use axum::Router;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
 use super::common::ApiContext;
 
@@ -10,14 +10,9 @@ mod list;
 mod update;
 mod item;
 
-pub fn router() -> Router<ApiContext> {
-    Router::new()
-        .route("/", get(list::list_lists).put(create::create_list))
-        .route(
-            "/index/{id}",
-            get(get::get_index)
-                .delete(delete::delete_list)
-                .patch(update::update_list),
-        )
+pub fn router() -> OpenApiRouter<ApiContext> {
+    OpenApiRouter::new()
+        .routes(routes!(list::list_lists, create::create_list))
+        .routes(routes!(get::get_index, delete::delete_list, update::update_list))
         .nest("/{list_id}", item::router())
 }

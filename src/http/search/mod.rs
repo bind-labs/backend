@@ -1,18 +1,38 @@
 use axum::routing::post;
-use axum::Router;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 use axum_extra::extract::Query;
 
 use crate::http::common::*;
 use crate::query::Query as SearchQuery;
 use crate::sql::{FeedItem, SortOrder};
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, utoipa::ToSchema)]
 pub struct SearchRequest {
     #[validate(custom(function = "crate::query::validate_query"))]
     query: String,
     sort: SortOrder,
 }
 
+/// Search for feed items
+#[utoipa::path(
+    post,
+    path = "/",
+    tag = "search",
+    request_body = SearchRequest,
+    params(
+        Pagination
+    ),
+    responses(
+        (status = 200, description = "List of feed items matching the search query", body = Vec<FeedItem>),
+        (status = 400, description = "Invalid search query"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn search(
     _user: AuthUser,
     State(state): State<ApiContext>,
@@ -43,6 +63,6 @@ pub async fn search(
     Ok(Json(values))
 }
 
-pub fn router() -> Router<ApiContext> {
-    Router::new().route("/", post(search))
+pub fn router() -> OpenApiRouter<ApiContext> {
+    OpenApiRouter::new().routes(routes!(search))
 }

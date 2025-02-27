@@ -1,17 +1,17 @@
 use crate::http::common::ApiContext;
-use axum::Router;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
 mod delete;
 mod get;
 mod update;
 
-pub fn router() -> Router<ApiContext> {
-    Router::new()
-        .route("/", axum::routing::get(get::get_user_history))
-        .route(
-            "/{id}",
-            axum::routing::get(get::get_user_history_item)
-                .delete(delete::delete_history_item)
-                .patch(update::update_history_item),
-        )
+pub fn router() -> OpenApiRouter<ApiContext> {
+    OpenApiRouter::new()
+        .routes(routes!(get::get_user_history))
+        .routes(routes!(
+            get::get_user_history_item,
+            delete::delete_history_item,
+            update::update_history_item
+        ))
 }

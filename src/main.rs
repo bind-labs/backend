@@ -94,7 +94,7 @@ async fn main() {
         .split_for_parts();
 
     let app = router
-        .merge(Scalar::with_url("/scalar", api))
+        .merge(Scalar::with_url("/docs", api))
         .into_make_service();
 
     let listener = TcpListener::bind(config.host)

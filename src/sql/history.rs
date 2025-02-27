@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 /// Represents a single item in a user's history
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table, ToSchema)]
 #[ormx(table = "user_history_item", id = id, insertable, deletable)]
 pub struct HistoryItem {
     #[ormx(default)]

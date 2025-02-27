@@ -7,12 +7,17 @@ use crate::sql::User;
 
 const DEFAULT_SESSION_LENGTH: chrono::Duration = chrono::Duration::weeks(1);
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, utoipa::ToSchema)]
 pub struct AuthUserClaims {
-    pub exp: i64, // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
-    pub iat: i64, // Issued at (as UTC timestamp)
+    /// Expiration time as UTC timestamp (required for JWT validation)
+    pub exp: i64,
+    /// Issued at time as UTC timestamp
+    pub iat: i64,
+    /// User's unique ID
     pub id: i32,
+    /// User's email address
     pub email: String,
+    /// User's username
     pub username: String,
 }
 

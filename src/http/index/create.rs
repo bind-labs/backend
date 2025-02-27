@@ -2,7 +2,7 @@ use crate::http::common::*;
 use crate::sql::{Icon, InsertUserIndex, SortOrder, UserIndex};
 use bind_macros::IntoRequest;
 
-#[derive(Deserialize, Serialize, Validate, IntoRequest)]
+#[derive(Deserialize, Serialize, Validate, IntoRequest, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateIndexRequest {
     #[validate(custom(function = "crate::query::validate_query"))]
@@ -14,6 +14,22 @@ pub struct CreateIndexRequest {
     icon: Icon,
 }
 
+/// Create a new index
+#[utoipa::path(
+    put,
+    path = "/",
+    tag = "index",
+    request_body = CreateIndexRequest,
+    responses(
+        (status = 200, description = "Index created successfully", body = UserIndex),
+        (status = 400, description = "Invalid index parameters"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn create_index(
     user: AuthUser,
     State(state): State<ApiContext>,

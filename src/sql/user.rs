@@ -1,6 +1,7 @@
 use rand::{rng, Rng};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::http::common::Origins;
 
@@ -25,7 +26,7 @@ pub struct User {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "user_oauth_client", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum OAuthRedirectClient {

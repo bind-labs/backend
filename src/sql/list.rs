@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use super::Icon;
 
 /// Represent a list created by a user
 /// Lists are a way for users to catalogue items from feeds
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table, ToSchema)]
 #[ormx(table = "user_list", id = id, insertable, deletable)]
 pub struct UserList {
     #[ormx(default)]
@@ -21,7 +22,7 @@ pub struct UserList {
 }
 
 /// Represents a single item in a user's list
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table, ToSchema)]
 #[ormx(table = "user_list_item", id = id, insertable, deletable)]
 pub struct UserListItem {
     #[ormx(default)]

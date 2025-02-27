@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 mod feed;
 mod history;
@@ -15,7 +16,7 @@ pub use index::*;
 pub use list::*;
 pub use user::*;
 
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type)]
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, ToSchema)]
 pub struct Icon {
     pub icon: String,
     pub color: String,
@@ -36,7 +37,7 @@ impl Icon {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::Type, ToSchema)]
 #[sqlx(type_name = "sort_order")]
 pub enum SortOrder {
     RecentlyUpdated,

@@ -1,4 +1,5 @@
-use axum::{routing::post, Router};
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
 use crate::http::common::ApiContext;
 
@@ -6,9 +7,9 @@ mod login;
 mod register;
 mod verify;
 
-pub fn router() -> Router<ApiContext> {
-    Router::new()
-        .route("/login", post(login::login))
-        .route("/register", post(register::register))
-        .route("/verify", post(verify::verify))
+pub fn router() -> OpenApiRouter<ApiContext> {
+    OpenApiRouter::new()
+        .routes(routes!(login::login))
+        .routes(routes!(register::register))
+        .routes(routes!(verify::verify))
 }

@@ -8,13 +8,19 @@ use reqwest::StatusCode;
 use super::AuthUserClaims;
 use crate::http::common::ApiContext;
 
-/// Add this as a parameter to a handler function to require the user to be logged in.
+/// Authenticated user information extracted from a valid JWT token.
 ///
-/// Parses a JWT from the `Authorization: Token <token>` header.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Add this as a parameter to a handler function to require the user to be logged in.
+/// Parses a JWT from the `Authorization: Bearer <token>` header.
+///
+/// This extractor will return 401 Unauthorized if no valid token is provided.
+#[derive(Debug, Clone, PartialEq, Eq, utoipa::ToSchema)]
 pub struct AuthUser {
+    /// Unique identifier for the user
     pub id: i32,
+    /// User's email address
     pub email: String,
+    /// User's username
     pub username: String,
 }
 

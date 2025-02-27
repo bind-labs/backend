@@ -325,7 +325,7 @@ impl From<ParsedFeed> for InsertFeed {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table)]
+#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table, utoipa::ToSchema)]
 #[ormx(table = "feed_item_parsed", id = id, insertable, deletable)]
 pub struct FeedItemParsed {
     #[ormx(default)]

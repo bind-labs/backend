@@ -1,7 +1,7 @@
 use crate::http::common::*;
 use crate::sql::{Icon, UserList};
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateListRequest {
     #[validate(length(min = 1, max = 1024))]
@@ -10,6 +10,27 @@ pub struct UpdateListRequest {
     icon: Option<Icon>,
 }
 
+/// Update a list
+#[utoipa::path(
+    patch,
+    path = "/index/{id}",
+    tag = "lists",
+    params(
+        ("id" = i32, Path, description = "List ID")
+    ),
+    request_body = UpdateListRequest,
+    responses(
+        (status = 200, description = "List updated successfully", body = UserList),
+        (status = 400, description = "Invalid list parameters"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not the owner of the list"),
+        (status = 404, description = "List not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn update_list(
     user: AuthUser,
     State(state): State<ApiContext>,

@@ -1,6 +1,27 @@
 use crate::http::common::*;
 use crate::sql::UserListItem;
 
+/// Get a specific item from a list
+#[utoipa::path(
+    get,
+    path = "/{list_id}/item/{item_id}",
+    tag = "lists",
+    params(
+        ("list_id" = i32, Path, description = "List ID"),
+        ("item_id" = i32, Path, description = "Item ID")
+    ),
+    responses(
+        (status = 200, description = "List item details", body = UserListItem),
+        (status = 400, description = "Item does not belong to the list"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not the owner of the list item"),
+        (status = 404, description = "List item not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn get_list_item(
     user: AuthUser,
     State(state): State<ApiContext>,
@@ -18,6 +39,25 @@ pub async fn get_list_item(
     Ok(Json(item))
 }
 
+/// Get all items from a list
+#[utoipa::path(
+    get,
+    path = "/{list_id}/item",
+    tag = "lists",
+    params(
+        ("list_id" = i32, Path, description = "List ID"),
+        Pagination
+    ),
+    responses(
+        (status = 200, description = "List of items in the list", body = Vec<UserListItem>),
+        (status = 401, description = "Unauthorized"),
+        (status = 404, description = "List not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn get_list_items(
     _: AuthUser,
     State(state): State<ApiContext>,

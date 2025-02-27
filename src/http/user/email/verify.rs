@@ -6,13 +6,25 @@ use lettre::{
 use crate::http::common::*;
 use crate::sql::{InsertUserEmailVerification, User, UserEmailVerification};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct EmailVerificationRequest {
     email: String,
 }
 
 /// Sends an email to the user with a verification code
 /// which must be used during registration
+#[utoipa::path(
+    post,
+    path = "/verify",
+    tag = "user:email",
+    request_body = EmailVerificationRequest,
+    responses(
+        (status = 200, description = "Verification email sent successfully"),
+        (status = 400, description = "Invalid email format"),
+        (status = 409, description = "User with this email already exists"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn verify(
     State(state): State<ApiContext>,
     Json(query): Json<EmailVerificationRequest>,

@@ -1,7 +1,7 @@
 use crate::http::common::*;
 use crate::sql::{FeedItem, InsertUserListItem, UserList, UserListItem};
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateListItemRequest {
     pub index: i32,
@@ -10,6 +10,27 @@ pub struct CreateListItemRequest {
     pub item: i64,
 }
 
+/// Add an item to a list
+#[utoipa::path(
+    post,
+    path = "/{list_id}/item", 
+    tag = "lists",
+    params(
+        ("list_id" = i32, Path, description = "List ID")
+    ),
+    request_body = CreateListItemRequest,
+    responses(
+        (status = 200, description = "Item added to list successfully", body = UserListItem),
+        (status = 400, description = "Invalid list item parameters"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not the owner of the list"),
+        (status = 404, description = "List or item not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn create_list_item(
     user: AuthUser,
     State(state): State<ApiContext>,

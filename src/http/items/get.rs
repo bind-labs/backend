@@ -2,6 +2,24 @@ use crate::http::common::*;
 use crate::sql::{FeedItem, FeedItemParsed, InsertFeedItemParsed};
 use crate::website::website::Extractor;
 
+/// Get a feed item by ID
+#[utoipa::path(
+    get,
+    path = "/{id}",
+    tag = "items",
+    params(
+        ("id" = i64, Path, description = "Item ID")
+    ),
+    responses(
+        (status = 200, description = "Feed item", body = FeedItem),
+        (status = 404, description = "Item not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn get_item(
     _user: AuthUser,
     State(state): State<ApiContext>,
@@ -11,6 +29,24 @@ pub async fn get_item(
     Ok(Json(index))
 }
 
+/// Get parsed content of a feed item
+#[utoipa::path(
+    get,
+    path = "/{id}/parsed",
+    tag = "items",
+    params(
+        ("id" = i64, Path, description = "Item ID")
+    ),
+    responses(
+        (status = 200, description = "Parsed feed item content", body = FeedItemParsed),
+        (status = 404, description = "Item not found"),
+        (status = 401, description = "Unauthorized"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn get_parsed(
     _user: AuthUser,
     State(state): State<ApiContext>,

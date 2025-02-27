@@ -1,6 +1,25 @@
 use crate::http::common::*;
 use crate::sql::UserList;
 
+/// Delete a list
+#[utoipa::path(
+    delete,
+    path = "/index/{id}",
+    tag = "lists",
+    params(
+        ("id" = i32, Path, description = "List ID")
+    ),
+    responses(
+        (status = 204, description = "List deleted successfully"),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not the owner of the list"),
+        (status = 404, description = "List not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn delete_list(
     user: AuthUser,
     State(state): State<ApiContext>,

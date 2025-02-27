@@ -1,6 +1,25 @@
 use crate::http::common::*;
 use crate::sql::UserList;
 
+/// Get a list by ID
+#[utoipa::path(
+    get,
+    path = "/index/{id}",
+    tag = "lists",
+    params(
+        ("id" = i32, Path, description = "List ID")
+    ),
+    responses(
+        (status = 200, description = "List details", body = UserList),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Not the owner of the list"),
+        (status = 404, description = "List not found"),
+        (status = 500, description = "Internal server error")
+    ),
+    security(
+        ("Authorization Token" = [])
+    )
+)]
 pub async fn get_index(
     user: AuthUser,
     State(state): State<ApiContext>,

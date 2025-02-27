@@ -1,12 +1,27 @@
 use crate::http::common::*;
 use crate::sql::OAuthRedirectClient;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct AuthorizeRequest {
     provider: String,
     client: OAuthRedirectClient,
 }
 
+/// Redirect to OAuth provider authorization page
+#[utoipa::path(
+    get,
+    path = "/authorize",
+    tag = "user:oauth",
+    params(
+        ("provider" = String, Query, description = "OAuth provider name"),
+        ("client" = OAuthRedirectClient, Query, description = "Client type (web, android, ios)")
+    ),
+    responses(
+        (status = 307, description = "Redirect to provider's authorization page"),
+        (status = 400, description = "Invalid provider"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn authorize(
     State(state): State<ApiContext>,
     Query(query): Query<AuthorizeRequest>,

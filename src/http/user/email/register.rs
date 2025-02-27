@@ -3,7 +3,7 @@ use crate::auth::user::AuthUserClaims;
 use crate::http::common::*;
 use crate::sql::{InsertUser, User, UserEmailVerification};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct UserRegisterRequest {
     email: String,
     email_code: String,
@@ -11,11 +11,25 @@ pub struct UserRegisterRequest {
     password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 pub struct UserRegisterResponse {
     token: String,
 }
 
+/// Register a new user with email and password
+#[utoipa::path(
+    post,
+    path = "/register",
+    tag = "user:email",
+    request_body = UserRegisterRequest,
+    responses(
+        (status = 200, description = "User registered successfully", body = UserRegisterResponse),
+        (status = 400, description = "Invalid registration data"),
+        (status = 403, description = "Invalid email verification code"),
+        (status = 409, description = "User already exists"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn register(
     State(state): State<ApiContext>,
     Json(info): Json<UserRegisterRequest>,
