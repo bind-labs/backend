@@ -9,12 +9,14 @@ mod history;
 mod index;
 mod list;
 mod user;
+pub mod tags;
 
 pub use feed::*;
 pub use history::*;
 pub use index::*;
 pub use list::*;
 pub use user::*;
+pub use tags::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, ToSchema)]
 pub struct Icon {

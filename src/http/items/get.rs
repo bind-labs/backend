@@ -1,6 +1,7 @@
 use crate::http::common::*;
+use crate::scraper::extract::Extractor;
 use crate::sql::{FeedItem, FeedItemParsed, InsertFeedItemParsed};
-use crate::website::website::Extractor;
+
 
 /// Get a feed item by ID
 #[utoipa::path(

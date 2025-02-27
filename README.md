@@ -37,6 +37,8 @@ Prefixed under `/api/v1`
       - `PUT /` Create a list
       - `PUT/UPDATE/DELETE /:item_id` Creates/updates/deletes an item in the list
 
+- Tags `/tags`
+
 - User `/user`
   - `/:id`
     - `GET/UPDATE /settings`

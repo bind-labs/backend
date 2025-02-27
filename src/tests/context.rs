@@ -52,9 +52,10 @@ impl TestContext {
         &self,
         request: http::Request<impl Into<axum::body::Body>>,
     ) -> http::Response<axum::body::Body> {
-        let app = router()
+        let (app, _) = router()
             .layer(TraceLayer::new_for_http())
-            .with_state(self.context.clone());
+            .with_state(self.context.clone())
+            .split_for_parts();
         let request = request.map(Into::into);
         app.oneshot(request).await.unwrap()
     }

@@ -4,7 +4,7 @@ use axum::{
 };
 use lettre::transport::smtp::Error as SmtpError;
 
-use crate::feed::daemon::FeedCreationError;
+use crate::{feed::daemon::FeedCreationError, scraper::WebParserError};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -25,6 +25,9 @@ pub enum Error {
 
     #[error("{0}")]
     Conflict(String),
+    
+    #[error("{0}")]
+    NotFound(String),
 
     #[error("You are not authorized to perform this action. Ensure you have provided a valid token in the Authorization header")]
     Unauthorized,
@@ -39,7 +42,7 @@ pub enum Error {
     CreateFeedError(#[from] FeedCreationError),
 
     #[error(transparent)]
-    WebParserError(#[from] crate::website::website::WebParserError),
+    WebParserError(#[from] WebParserError),
 
     #[error(transparent)]
     AnyhowError(#[from] anyhow::Error),
@@ -55,6 +58,7 @@ impl IntoResponse for Error {
             Error::Forbidden(msg) | Error::BadRequest(msg) | Error::Conflict(msg) => {
                 (http::StatusCode::FORBIDDEN, msg)
             }
+            Error::NotFound(msg) => (http::StatusCode::NOT_FOUND, msg),
             Error::Unauthorized => (http::StatusCode::UNAUTHORIZED, format!("{}", self)),
             Error::NotOwner => (http::StatusCode::FORBIDDEN, format!("{}", self)),
             Error::LoginFailed => (http::StatusCode::UNAUTHORIZED, format!("{}", self)),

@@ -5,6 +5,7 @@ pub mod index;
 pub mod items;
 pub mod lists;
 pub mod search;
+pub mod tags;
 pub mod user;
 
 use axum::Router;
@@ -68,7 +69,8 @@ use utoipa::{
             (name = "user", description = "Routes related to user management"),
             (name = "user:email", description = "Routes related to email authentication"),
             (name = "user:oauth", description = "Routes related to OAuth authentication"),
-            (name = "user:history", description = "Routes related to user reading history")
+            (name = "user:history", description = "Routes related to user reading history"),
+            (name = "tags", description = "Routes related to user tags management")
         ),
         info(
             title = "Bind Feed Aggregator API",
@@ -116,5 +118,6 @@ pub fn router() -> OpenApiRouter<ApiContext> {
         .nest("/item", items::router())
         .nest("/list", lists::router())
         .nest("/search", search::router())
+        .nest("/tag", tags::router())
         .nest("/user", user::router())
 }
