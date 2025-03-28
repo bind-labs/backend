@@ -51,7 +51,7 @@ CREATE TABLE feed_item (
   id bigserial PRIMARY KEY,
   feed_id integer NOT NULL REFERENCES feed (id) ON DELETE CASCADE,
   guid text NOT NULL, -- Globally unique identifier, defined by the feed
-  index_in_feed integer NOT NULL UNIQUE, -- Index of the item in the feed, where larger numbers are more recent
+  index_in_feed integer NOT NULL, -- Index of the item in the feed, when it was queried
 
   title text NOT NULL,
   link text,

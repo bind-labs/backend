@@ -32,7 +32,7 @@ pub async fn parse_feed_from_response(
     let content_type = headers
         .get("content-type")
         // TODO: guess the content type
-        .ok_or_else(|| ParsedFromResponseError::UnknownContentType)
+        .ok_or_else(|| ParsedFromResponseError::UnknownContentType("".to_string()))
         .and_then(|x| {
             x.to_str()
                 .map_err(|_| ParsedFromResponseError::CorruptContentType)
@@ -61,14 +61,16 @@ pub async fn parse_feed_from_response(
             .map_err(ParsedFromResponseError::JsonParseError)?
             .try_into()
             .map_err(ParsedFromResponseError::GenericParseError),
-        _ => Err(ParsedFromResponseError::UnknownContentType),
+        _ => Err(ParsedFromResponseError::UnknownContentType(
+            content_type.to_string(),
+        )),
     }
 }
 
 #[derive(Debug, Error)]
 pub enum ParsedFromResponseError {
-    #[error("Unknown content type")]
-    UnknownContentType,
+    #[error("Unknown content type, {0}")]
+    UnknownContentType(String),
     #[error("Corrupt content type")]
     CorruptContentType,
     #[error("Corrupt response body")]

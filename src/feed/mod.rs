@@ -13,8 +13,7 @@ pub use crate::sql::FeedFormat;
 #[derive(Serialize, Debug, Deserialize, ToSchema)]
 pub struct FeedInformation {
     /// URL of the feed
-    #[schema(value_type = String, format = "uri")]
-    pub url: Url,
+    pub url: String,
     /// Format of the feed (RSS, Atom, or JSON)
     pub format: FeedFormat,
 }

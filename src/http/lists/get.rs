@@ -4,7 +4,7 @@ use crate::sql::UserList;
 /// Get a list by ID
 #[utoipa::path(
     get,
-    path = "/index/{id}",
+    path = "/{id}",
     tag = "lists",
     params(
         ("id" = i32, Path, description = "List ID")
@@ -20,15 +20,15 @@ use crate::sql::UserList;
         ("Authorization Token" = [])
     )
 )]
-pub async fn get_index(
+pub async fn get_list(
     user: AuthUser,
     State(state): State<ApiContext>,
     Path(id): Path<i32>,
 ) -> Result<Json<UserList>> {
-    let index = UserList::get(&state.pool, id).await?;
-    if index.owner != user.id {
+    let list = UserList::get(&state.pool, id).await?;
+    if list.owner != user.id {
         return Err(Error::NotOwner);
     }
 
-    Ok(Json(index))
+    Ok(Json(list))
 }

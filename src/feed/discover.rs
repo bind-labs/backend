@@ -18,9 +18,8 @@ pub fn discover_feed_links(url: &Url, html: &str) -> Vec<FeedInformation> {
                 Some("application/json") => FeedFormat::Json,
                 _ => return None,
             };
-
             Some(FeedInformation {
-                url: url.join(link).ok()?,
+                url: url.join(link).ok()?.to_string(),
                 format,
             })
         })

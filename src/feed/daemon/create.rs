@@ -42,7 +42,7 @@ pub async fn get_feed_creation(
 
             let parsed_feed = parse_feed_from_response(response).await?;
             let feed_insert = InsertFeed {
-                link: parsed_feed.link.to_string(),
+                link: link.to_string(),
                 domain: domain_from_link(link),
                 etag,
                 ttl_in_minutes: ttl_in_minutes.map(|d| d.num_minutes() as i32),
