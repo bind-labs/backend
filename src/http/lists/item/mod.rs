@@ -10,4 +10,5 @@ pub fn router() -> OpenApiRouter<ApiContext> {
     OpenApiRouter::new()
         .routes(routes!(get::get_list_items, create::create_list_item))
         .routes(routes!(delete::delete_list_item))
+        .routes(routes!(get::get_list_item))
 }

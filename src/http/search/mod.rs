@@ -1,7 +1,6 @@
-use axum::routing::post;
+use axum_extra::extract::Query;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
-use axum_extra::extract::Query;
 
 use crate::http::common::*;
 use crate::query::Query as SearchQuery;

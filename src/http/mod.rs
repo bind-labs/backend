@@ -8,12 +8,11 @@ pub mod search;
 pub mod tags;
 pub mod user;
 
-use axum::Router;
 use common::ApiContext;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 
-use crate::auth::user::{AuthUser, MaybeAuthUser};
+use crate::auth::user::AuthUser;
 use utoipa::{
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     Modify,

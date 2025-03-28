@@ -3,7 +3,6 @@ pub mod discover;
 pub mod json;
 pub mod parser;
 
-use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
