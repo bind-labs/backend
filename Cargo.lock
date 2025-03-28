@@ -395,6 +395,7 @@ dependencies = [
  "pgtemp",
  "rand 0.9.0",
  "readability-rs",
+ "regex",
  "reqwest",
  "rss",
  "rustls",

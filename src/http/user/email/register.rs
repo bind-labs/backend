@@ -3,6 +3,11 @@ use crate::auth::user::AuthUserClaims;
 use crate::http::common::*;
 use crate::sql::{InsertUser, User, UserEmailVerification};
 
+use std::cell::LazyCell;
+
+const USERNAME_REGEX: LazyCell<regex::Regex> =
+    LazyCell::new(|| regex::Regex::new(r"^[a-zA-Z0-9_\.-]{2,48}$").unwrap());
+
 #[derive(Deserialize, utoipa::ToSchema)]
 pub struct UserRegisterRequest {
     email: String,
@@ -34,6 +39,13 @@ pub async fn register(
     State(state): State<ApiContext>,
     Json(info): Json<UserRegisterRequest>,
 ) -> Result<Json<UserRegisterResponse>> {
+    if !USERNAME_REGEX.is_match(&info.username) {
+        return Err(Error::BadRequest(format!(
+            "Username must match regex [a-zA-Z0-9_\\.-]{{2,48}}, got {}",
+            info.username
+        )));
+    }
+
     // Check if user already exists
     if User::get_by_email(&state.pool, &info.email).await.is_ok() {
         return Err(Error::Conflict(format!(

@@ -1,13 +1,12 @@
 use fake::{faker::internet::en::Username, Fake};
 use jsonwebtoken::{decode_header, DecodingKey, Validation};
 use ormx::{Insert, Table};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use crate::auth::oauth::OAuth2Client;
 use crate::sql::{InsertUser, User};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct ExternalClaims {
     email: String,
     name: Option<String>,
@@ -23,7 +22,8 @@ pub struct ExternalJwtToken {
 
 impl ExternalJwtToken {
     pub fn parse(
-        provider: &OAuth2Client,
+        provider: String,
+        client_id: String,
         token: String,
         decoding_key: &DecodingKey,
     ) -> jsonwebtoken::errors::Result<Self> {
@@ -31,12 +31,12 @@ impl ExternalJwtToken {
 
         let mut validation = Validation::new(header.alg);
         // TODO: is the audience always going to be the client id?
-        validation.set_audience(&[provider.client_id().to_string()]);
+        validation.set_audience(&[client_id]);
 
         let token_data = jsonwebtoken::decode::<ExternalClaims>(&token, decoding_key, &validation)?;
 
         Ok(Self {
-            provider: provider.name().to_string(),
+            provider,
             claims: token_data.claims,
         })
     }
@@ -92,5 +92,104 @@ impl ExternalJwtToken {
         .await?;
 
         Ok(user)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fake::{faker::internet::en::SafeEmail, Fake};
+    use jsonwebtoken::{Algorithm, EncodingKey, Header};
+    use sqlx::{Pool, Postgres};
+
+    #[tokio::test]
+    async fn test_parse() {
+        let jwt_secret = "secret";
+
+        let claims = ExternalClaims {
+            email: SafeEmail().fake(),
+            name: Some("Test Name".to_string()),
+            given_name: None,
+            preferred_username: None,
+            nickname: None,
+        };
+        let token = jsonwebtoken::encode(
+            &Header::new(Algorithm::HS256),
+            &claims,
+            &EncodingKey::from_secret(jwt_secret.as_bytes()),
+        )
+        .unwrap();
+
+        let token = ExternalJwtToken::parse(
+            "test".to_string(),
+            "test_client_id".to_string(),
+            token,
+            &DecodingKey::from_secret(jwt_secret.as_bytes()),
+        )
+        .unwrap();
+        assert_eq!(token.provider, "test_provider");
+        assert_eq!(token.claims.email, claims.email);
+    }
+
+    #[test]
+    fn test_email() {
+        let claims = ExternalClaims {
+            email: "test@example.com".to_string(),
+            name: None,
+            given_name: None,
+            preferred_username: None,
+            nickname: None,
+        };
+        let token = ExternalJwtToken {
+            provider: "test_provider".to_string(),
+            claims,
+        };
+        assert_eq!(token.email(), "test@example.com");
+    }
+
+    #[test]
+    fn test_username() {
+        let claims = ExternalClaims {
+            email: "test@example.com".to_string(),
+            name: Some("Test Name".to_string()),
+            given_name: Some("Test".to_string()),
+            preferred_username: Some("testuser".to_string()),
+            nickname: None,
+        };
+        let token = ExternalJwtToken {
+            provider: "test_provider".to_string(),
+            claims,
+        };
+        assert_eq!(token.username(), Some("testuser".to_string()));
+    }
+
+    #[tokio::test]
+    async fn test_create_or_update_user() {
+        // Setup a mock or in-memory database
+        let pool = Pool::<Postgres>::connect("postgres://user:password@localhost/test_db")
+            .await
+            .unwrap();
+
+        let claims = ExternalClaims {
+            email: SafeEmail().fake(),
+            name: Some("Test Name".to_string()),
+            given_name: None,
+            preferred_username: None,
+            nickname: None,
+        };
+        let token = ExternalJwtToken {
+            provider: "test_provider".to_string(),
+            claims,
+        };
+
+        // Test user creation
+        let user = token.create_or_update_user(&pool).await.unwrap();
+        assert_eq!(user.email, token.email());
+        assert!(user.providers.contains(&token.provider));
+
+        // Test user update
+        let updated_user = token.create_or_update_user(&pool).await.unwrap();
+        assert_eq!(updated_user.email, token.email());
+        assert!(updated_user.providers.contains(&token.provider));
     }
 }

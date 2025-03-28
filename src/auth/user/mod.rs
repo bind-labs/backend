@@ -1,6 +1,5 @@
 mod claims;
-#[allow(clippy::module_inception)]
-mod user;
+mod extractor;
 
 pub use claims::*;
-pub use user::*;
+pub use extractor::*;

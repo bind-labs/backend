@@ -137,8 +137,13 @@ impl OAuth2Client {
             .decoding_key()
             .await
             .context("Failed to get decoding key")?;
-        let jwt = ExternalJwtToken::parse(self, access_token, &decoding_key)
-            .context("Failed to parse JWT")?;
+        let jwt = ExternalJwtToken::parse(
+            self.name().to_string(),
+            self.client_id().to_string(),
+            access_token,
+            &decoding_key,
+        )
+        .context("Failed to parse JWT")?;
 
         Ok(jwt)
     }

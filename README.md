@@ -70,9 +70,16 @@ Prefixed under `/api/v1`
   - [x] Support `Retry-After` header on 429
   - [x] Use `If-Modified-Since` header to get 304
   - [x] Use `ETag` header to get 304
-  - [x] Should we look at `max-age`?
+  - [x] Support `max-age`
+  - [ ] Support `<sy:updatePeriod>` and `<sy:updateFrequency>`
   - [x] Follow redirect and update link to the feed
   - [ ] JSON Feed support using Serde
+  - [ ] Feed discovery
+    - [ ] Search via Kagi Search API
+    - [ ] Search again with `site:domain.com rss`
+      - Take any links that include feed/rss/atom at the end of the path
+    - [ ] Search for youtube channels
+    - [ ] Search existing feeds
 - [ ] Website parsing
 - [x] API Implementation
   - [x] Feeds

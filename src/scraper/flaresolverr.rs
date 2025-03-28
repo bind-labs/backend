@@ -1,3 +1,4 @@
+#[cfg(feature = "flaresolverr")]
 use super::WebParserError;
 
 pub fn is_cloudflare_response(headers: &reqwest::header::HeaderMap) -> bool {

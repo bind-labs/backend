@@ -48,11 +48,12 @@ pub async fn login(
         return Err(Error::BadRequest("Email or username required".to_string()));
     };
 
-    if let Some(user) = user
-        && let Some(ref password_hash) = user.password_hash
-        && verify_password(&info.password, password_hash).expect("Failed to verify password")
-    {
-        let claims: AuthUserClaims = user.into();
+    if let Some(ref password_hash) = user.clone().and_then(|user| user.password_hash) {
+        if !verify_password(&info.password, password_hash).expect("Failed to verify password") {
+            return Err(Error::LoginFailed);
+        }
+        // TODO: remove unwrap
+        let claims: AuthUserClaims = user.unwrap().into();
         let token = claims
             .to_jwt(&state.jwt_secret)
             .expect("Failed to create token");
