@@ -13,6 +13,7 @@ struct ExternalClaims {
     given_name: Option<String>,
     preferred_username: Option<String>,
     nickname: Option<String>,
+    exp: i64,
 }
 
 pub struct ExternalJwtToken {
@@ -97,10 +98,12 @@ impl ExternalJwtToken {
 
 #[cfg(test)]
 mod tests {
+    use crate::tests::TestContext;
+
     use super::*;
+    use chrono::Utc;
     use fake::{faker::internet::en::SafeEmail, Fake};
     use jsonwebtoken::{Algorithm, EncodingKey, Header};
-    use sqlx::{Pool, Postgres};
 
     #[tokio::test]
     async fn test_parse() {
@@ -112,6 +115,7 @@ mod tests {
             given_name: None,
             preferred_username: None,
             nickname: None,
+            exp: Utc::now().timestamp() + 1000,
         };
         let token = jsonwebtoken::encode(
             &Header::new(Algorithm::HS256),
@@ -127,7 +131,7 @@ mod tests {
             &DecodingKey::from_secret(jwt_secret.as_bytes()),
         )
         .unwrap();
-        assert_eq!(token.provider, "test_provider");
+        assert_eq!(token.provider, "test");
         assert_eq!(token.claims.email, claims.email);
     }
 
@@ -139,6 +143,7 @@ mod tests {
             given_name: None,
             preferred_username: None,
             nickname: None,
+            exp: Utc::now().timestamp() + 1000,
         };
         let token = ExternalJwtToken {
             provider: "test_provider".to_string(),
@@ -155,6 +160,7 @@ mod tests {
             given_name: Some("Test".to_string()),
             preferred_username: Some("testuser".to_string()),
             nickname: None,
+            exp: Utc::now().timestamp() + 1000,
         };
         let token = ExternalJwtToken {
             provider: "test_provider".to_string(),
@@ -165,10 +171,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_or_update_user() {
-        // Setup a mock or in-memory database
-        let pool = Pool::<Postgres>::connect("postgres://user:password@localhost/test_db")
-            .await
-            .unwrap();
+        let pool = TestContext::new().await.pool;
 
         let claims = ExternalClaims {
             email: SafeEmail().fake(),
@@ -176,6 +179,7 @@ mod tests {
             given_name: None,
             preferred_username: None,
             nickname: None,
+            exp: Utc::now().timestamp() + 1000,
         };
         let token = ExternalJwtToken {
             provider: "test_provider".to_string(),
