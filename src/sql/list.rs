@@ -21,6 +21,19 @@ pub struct UserList {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+impl UserList {
+    pub async fn count_by_owner(pool: &sqlx::PgPool, user_id: i32) -> sqlx::Result<i64> {
+        sqlx::query_scalar!(
+            r#"
+            SELECT COUNT(*) as "count!" FROM user_list WHERE owner = $1
+            "#,
+            user_id
+        )
+        .fetch_one(pool)
+        .await
+    }
+}
+
 /// Represents a single item in a user's list
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table, ToSchema)]
 #[ormx(table = "user_list_item", id = id, insertable, deletable)]

@@ -10,45 +10,43 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    // Internal errors
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
     #[error(transparent)]
     DatabaseError(#[from] sqlx::Error),
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
+    #[error(transparent)]
+    AnyhowError(#[from] anyhow::Error),
+    #[error(transparent)]
+    SmtpError(#[from] SmtpError),
 
+    // Http status codes
     #[error("{0}")]
     Forbidden(String),
-
     #[error("{0}")]
     BadRequest(String),
-
     #[error("{0}")]
     Conflict(String),
-
     #[error("{0}")]
     NotFound(String),
-
     #[error("You are not authorized to perform this action. Ensure you have provided a valid token in the Authorization header")]
     Unauthorized,
 
+    // Validation errors
     #[error("You are not the owner of this resource")]
     NotOwner,
 
     #[error("Login failed")]
     LoginFailed,
 
+    // Misc
     #[error(transparent)]
     CreateFeedError(#[from] FeedCreationError),
 
     #[error(transparent)]
     WebParserError(#[from] WebParserError),
-
-    #[error(transparent)]
-    AnyhowError(#[from] anyhow::Error),
-
-    #[error(transparent)]
-    SmtpError(#[from] SmtpError),
 }
 
 impl IntoResponse for Error {

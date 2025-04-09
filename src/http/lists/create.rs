@@ -1,6 +1,8 @@
 use crate::http::common::*;
 use crate::sql::{Icon, InsertUserList, UserList};
 
+const MAX_LIST_COUNT: i64 = 500;
+
 #[derive(Deserialize, Validate, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateListRequest {
@@ -19,6 +21,7 @@ pub struct CreateListRequest {
         (status = 200, description = "List created successfully", body = UserList),
         (status = 400, description = "Invalid list parameters"),
         (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Reached max list count of 500"),
         (status = 500, description = "Internal server error")
     ),
     security(
@@ -31,6 +34,13 @@ pub async fn create_list(
     Json(body): Json<CreateListRequest>,
 ) -> Result<Json<UserList>> {
     body.validate()?;
+
+    let list_count = UserList::count_by_owner(&state.pool, user.id).await?;
+    if list_count >= MAX_LIST_COUNT {
+        return Err(Error::Forbidden(
+            "Reached max list count of 500".to_string(),
+        ));
+    }
 
     let query = InsertUserList {
         owner: user.id,

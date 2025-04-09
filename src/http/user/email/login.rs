@@ -29,7 +29,7 @@ pub struct UserLoginResponse {
     tag = "user:email",
     request_body = UserLoginRequest,
     responses(
-        (status = 200, description = "Login successful", body = UserLoginResponse, 
+        (status = 200, description = "Login successful", body = UserLoginResponse,
          example = json!({"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."})),
         (status = 400, description = "Bad request - missing email or username"),
         (status = 401, description = "Login failed - incorrect credentials"),
