@@ -3,6 +3,10 @@ name = "bind-backend"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "gen-openapi"
+path = "./src/gen_openapi.rs"
+
 [features]
 default = []
 flaresolverr = []
@@ -85,7 +89,7 @@ argon2 = { version = "0.5.3", features = ["std"] }
 lettre = { version = "0.11.12", default-features = false, features = ["builder", "hostname", "pool", "smtp-transport", "tokio1", "tokio1-rustls-tls"] }
 regex = "1.11.1"
 
-utoipa = { version = "5.3.1", features = ["chrono"] }
+utoipa = { version = "5.3.1", features = ["chrono", "yaml"] }
 utoipa-axum = "0.2.0"
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 

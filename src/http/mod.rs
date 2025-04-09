@@ -81,7 +81,7 @@ use utoipa::{
             )
         )
     )]
-struct ApiDocs;
+pub struct ApiDocs;
 
 /// Security addon that adds JWT Bearer authentication to the OpenAPI documentation.
 ///
