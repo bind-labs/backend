@@ -43,7 +43,7 @@
 
         packages.default = bind;
         packages.dockerImage = pkgs.dockerTools.buildImage {
-          name = "ghcr.io/bind-labs/bind";
+          name = "ghcr.io/bind-labs/backend";
           tag = "latest";
           copyToRoot = [ bind ];
           config = {
