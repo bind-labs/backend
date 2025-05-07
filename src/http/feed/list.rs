@@ -3,7 +3,7 @@ use crate::sql::Feed;
 
 /// List all available feeds
 ///
-/// Retrieves a list of all RSS/Atom feeds available in the system. This endpoint requires 
+/// Retrieves a list of all RSS/Atom feeds available in the system. This endpoint requires
 /// authentication and returns feeds that the system is aggregating. Users can subscribe to
 /// these feeds by adding them to their personal indexes.
 ///

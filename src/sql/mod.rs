@@ -8,15 +8,15 @@ mod feed;
 mod history;
 mod index;
 mod list;
-mod user;
 pub mod tags;
+mod user;
 
 pub use feed::*;
 pub use history::*;
 pub use index::*;
 pub use list::*;
-pub use user::*;
 pub use tags::*;
+pub use user::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, ToSchema)]
 pub struct Icon {

@@ -45,9 +45,9 @@ pub async fn create_tag(
 ) -> Result<impl IntoResponse> {
     body.validate()?;
 
-    let tag = InsertUserTag { 
-        owner: user.id, 
-        title: body.title, 
+    let tag = InsertUserTag {
+        owner: user.id,
+        title: body.title,
         children: vec![],
         updated_at: chrono::Utc::now(),
     };

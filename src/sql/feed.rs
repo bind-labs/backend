@@ -211,7 +211,9 @@ pub struct FeedItemEnclosure {
 }
 
 /// Represent a single feed item in the database
-#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table, utoipa::ToSchema)]
+#[derive(
+    Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table, utoipa::ToSchema,
+)]
 #[ormx(table = "feed_item", id = id, insertable, deletable)]
 pub struct FeedItem {
     /// Unique identifier of the feed item
@@ -325,7 +327,9 @@ impl From<ParsedFeed> for InsertFeed {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table, utoipa::ToSchema)]
+#[derive(
+    Clone, Debug, PartialEq, sqlx::FromRow, Deserialize, Serialize, ormx::Table, utoipa::ToSchema,
+)]
 #[ormx(table = "feed_item_parsed", id = id, insertable, deletable)]
 pub struct FeedItemParsed {
     #[ormx(default)]
