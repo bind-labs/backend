@@ -18,7 +18,7 @@ pub fn is_recaptcha(body: &str) -> bool {
 }
 
 #[cfg(feature = "flaresolverr")]
-struct Flaresolverr {
+pub struct Flaresolverr {
     session_id: String,
     host_url: String,
 }
@@ -28,7 +28,7 @@ impl Flaresolverr {
     pub async fn new(client: &reqwest::Client, host: &str) -> Result<Self, WebParserError> {
         tracing::debug!("Creating a new flaresolverr session");
         let response = client
-            .post(&format!("{}/v1", host))
+            .post(format!("{}/v1", host))
             .json(&serde_json::json!({
                 "cmd": "sessions.create"
             }))
@@ -40,7 +40,7 @@ impl Flaresolverr {
         tracing::debug!("Created a new flaresolverr session with id {}", session_id);
 
         Ok(Self {
-            session_id: session_id,
+            session_id,
             host_url: host.to_string(),
         })
     }
@@ -51,7 +51,7 @@ impl Flaresolverr {
         url: &str,
     ) -> Result<String, WebParserError> {
         let response = client
-            .post(&format!("{}/v1", self.host_url))
+            .post(format!("{}/v1", self.host_url))
             .json(&serde_json::json!({
                 "cmd": "request.get",
                 "url": url,
@@ -71,7 +71,7 @@ impl Flaresolverr {
 impl Drop for Flaresolverr {
     fn drop(&mut self) {
         let response = reqwest::Client::new()
-            .post(&format!("{}/v1", self.host_url))
+            .post(format!("{}/v1", self.host_url))
             .json(&serde_json::json!({
                 "cmd": "sessions.destroy",
                 "session": self.session_id

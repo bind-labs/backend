@@ -1,3 +1,6 @@
+#[cfg(feature = "flaresolverr")]
+use super::flaresolverr::{is_cf_captcha, is_cloudflare_response, Flaresolverr};
+
 use super::WebParserError;
 use readability::{ExtractOptions, Readable};
 use reqwest::Url;
@@ -29,7 +32,11 @@ impl Extractor {
                 let body = response.text().await?;
                 if is_cloudflare_response(&headers) && is_cf_captcha(&body) {
                     let body = self.solver.make_request(&self.client, url).await?;
-                    return Ok(body);
+                    return Ok(Readable {
+                        title: "".to_string(),
+                        content: body.clone(),
+                        text: body,
+                    });
                 }
             }
 

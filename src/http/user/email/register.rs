@@ -5,7 +5,7 @@ use crate::sql::{InsertUser, User, UserEmailVerification};
 
 use std::sync::LazyLock;
 
-const USERNAME_REGEX: LazyLock<regex::Regex> =
+static USERNAME_REGEX: LazyLock<regex::Regex> =
     LazyLock::new(|| regex::Regex::new(r"^[a-zA-Z0-9_\.-]{2,48}$").unwrap());
 
 #[derive(Deserialize, utoipa::ToSchema)]
