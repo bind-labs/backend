@@ -21,7 +21,7 @@
             # Include all .sql files as well
             ./migrations
             # Include cached queries
-            # ./.sqlx
+            ./.sqlx
             ./Cargo.toml
             ./Cargo.lock
           ];
