@@ -34,20 +34,20 @@
           # so we ignore tests
           doCheck = false;
         };
-        bind = craneLib.buildPackage (commonArgs // {
-          pname = "bind";
+        api = craneLib.buildPackage (commonArgs // {
+          pname = "api";
           cargoArtifacts = craneLib.buildDepsOnly commonArgs;
         });
       in {
-        checks = { inherit bind; };
+        checks = { api = api; };
 
-        packages.default = bind;
+        packages.default = api;
         packages.dockerImage = pkgs.dockerTools.buildImage {
           name = "ghcr.io/bind-labs/api";
           tag = "latest";
-          copyToRoot = [ bind ];
+          copyToRoot = [ api ];
           config = {
-            Cmd = [ "${bind}/bin/bind" ];
+            Cmd = [ "${api}/bin/api" ];
             User = "1000:1000";
           };
         };

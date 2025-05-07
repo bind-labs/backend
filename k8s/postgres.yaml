@@ -7,16 +7,6 @@ spec:
   instances: 3
   imageName: ghcr.io/cloudnative-pg/postgresql:17
 
-  # prefer geographically close replicas
-  services:
-    additional:
-      - selectorType: r
-        serviceTemplate:
-          metadata:
-            name: postgres-geo-r
-            annotations:
-              service.kubernetes.io/topology-mode: Auto
-
   bootstrap:
     initdb:
       database: bind
@@ -28,6 +18,16 @@ spec:
         login: true
         passwordSecret:
           name: postgres-api-role
+
+    # prefer geographically close replicas
+    services:
+      additional:
+        - selectorType: r
+          serviceTemplate:
+            metadata:
+              name: postgres-geo-r
+              annotations:
+                service.kubernetes.io/topology-mode: Auto
 
   monitoring:
     enablePodMonitor: true

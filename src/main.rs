@@ -1,6 +1,6 @@
-use bind_backend::auth::oauth::{OAuth2Client, OAuth2ClientConfig};
-use bind_backend::http::common::Origins;
-use bind_backend::smtp::SmtpClient;
+use api::auth::oauth::{OAuth2Client, OAuth2ClientConfig};
+use api::http::common::Origins;
+use api::smtp::SmtpClient;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -11,9 +11,9 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa_scalar::{Scalar, Servable as ScalarServable};
 
-use bind_backend::config::Config;
-use bind_backend::feed::daemon::Daemon;
-use bind_backend::http::{self, common::ApiContext};
+use api::config::Config;
+use api::feed::daemon::Daemon;
+use api::http::{self, common::ApiContext};
 
 #[tokio::main]
 async fn main() {

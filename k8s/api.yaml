@@ -19,14 +19,24 @@ spec:
                       - api
               topologyKey: kubernetes.io/hostname
 
+      securityContext:
+        runAsNonRoot: true
+
       containers:
         - name: api
-          image: ghcr.io/bind-labs/backend:latest
+          image: ghcr.io/bind-labs/api:latest
           ports:
             - containerPort: 3000
           envFrom:
             - secretRef:
                 name: api
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
 
 ---
 apiVersion: v1
