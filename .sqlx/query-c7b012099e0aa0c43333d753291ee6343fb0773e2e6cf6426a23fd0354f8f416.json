@@ -1,0 +1,86 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT \"id\", \"owner\", \"query\", \"sort\", \"title\", \"description\", \"icon\" AS \"icon!: Icon\", \"created_at\", \"updated_at\" FROM \"user_index\" WHERE \"id\" = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "owner",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "query",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "sort",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "icon!: Icon",
+        "type_info": {
+          "Custom": {
+            "name": "icon",
+            "kind": {
+              "Composite": [
+                [
+                  "icon",
+                  "Text"
+                ],
+                [
+                  "hex_color",
+                  "Text"
+                ]
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c7b012099e0aa0c43333d753291ee6343fb0773e2e6cf6426a23fd0354f8f416"
+}

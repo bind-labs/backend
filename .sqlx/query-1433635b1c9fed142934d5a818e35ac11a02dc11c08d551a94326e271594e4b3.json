@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM \"feed_item_parsed\" WHERE \"id\" = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1433635b1c9fed142934d5a818e35ac11a02dc11c08d551a94326e271594e4b3"
+}

@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE feed\n        SET\n          status = $2,\n          format = $3,\n          link = $4,\n          domain = $5,\n          title = $6,\n          description = $7,\n          icon = $8,\n          skip_hours = $9,\n          skip_days_of_week = $10,\n          ttl_in_minutes = $11,\n          etag = $12,\n          updated_at = $13,\n          fetched_at = $14,\n          successful_fetch_at = $15,\n          next_fetch_at = $16\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        {
+          "Custom": {
+            "name": "feed_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "completed",
+                "suspended",
+                "broken"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "feed_format",
+            "kind": {
+              "Enum": [
+                "rss",
+                "atom",
+                "json"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4Array",
+        "Int4Array",
+        "Int4",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f66f949dd13226752309363dc2e25aebc8ff4f2403c240a86b767e081658ab16"
+}

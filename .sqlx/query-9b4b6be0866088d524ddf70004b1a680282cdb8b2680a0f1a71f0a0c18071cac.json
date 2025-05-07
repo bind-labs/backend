@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"user_index\" SET \"updated_at\" = $1 WHERE \"id\" = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9b4b6be0866088d524ddf70004b1a680282cdb8b2680a0f1a71f0a0c18071cac"
+}

@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"user_list_item\" SET \"index\" = $1, \"owner\" = $2, \"list\" = $3, \"item\" = $4, \"created_at\" = $5, \"updated_at\" = $6 WHERE \"id\" = $7",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        "Int4",
+        "Int8",
+        "Timestamptz",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "07cd0c2a5792d795af632e4f0b27bee05415c3f33a0a2112d88b9041d48c08bf"
+}

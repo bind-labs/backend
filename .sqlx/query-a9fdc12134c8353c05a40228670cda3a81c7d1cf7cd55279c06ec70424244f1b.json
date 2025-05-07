@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM feed_item WHERE id IN\n            (SELECT id FROM feed_item WHERE feed_id = $1 ORDER BY updated_at, id DESC OFFSET 1000)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a9fdc12134c8353c05a40228670cda3a81c7d1cf7cd55279c06ec70424244f1b"
+}

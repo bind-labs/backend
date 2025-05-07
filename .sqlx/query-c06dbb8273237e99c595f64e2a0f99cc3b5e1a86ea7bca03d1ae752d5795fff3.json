@@ -1,0 +1,49 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"feed_item\" SET \"guid\" = $1, \"feed_id\" = $2, \"index_in_feed\" = $3, \"title\" = $4, \"link\" = $5, \"description\" = $6, \"enclosure\" = $7, \"categories\" = $8, \"comments_link\" = $9, \"published_at\" = $10, \"content\" = $11, \"content_type\" = $12, \"base_link\" = $13, \"created_at\" = $14, \"updated_at\" = $15 WHERE \"id\" = $16",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "feed_item_enclosure",
+            "kind": {
+              "Composite": [
+                [
+                  "link",
+                  "Text"
+                ],
+                [
+                  "mime",
+                  "Text"
+                ],
+                [
+                  "length",
+                  "Int4"
+                ]
+              ]
+            }
+          }
+        },
+        "TextArray",
+        "Text",
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c06dbb8273237e99c595f64e2a0f99cc3b5e1a86ea7bca03d1ae752d5795fff3"
+}

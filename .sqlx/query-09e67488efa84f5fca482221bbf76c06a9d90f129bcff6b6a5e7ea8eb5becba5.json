@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO \"user_tag\" (\"owner\", \"title\", \"children\", \"updated_at\") VALUES ($1, $2, $3, $4) RETURNING \"id\", \"created_at\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        {
+          "Custom": {
+            "name": "tag_child[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "tag_child",
+                  "kind": {
+                    "Composite": [
+                      [
+                        "type",
+                        {
+                          "Custom": {
+                            "name": "tag_child_type",
+                            "kind": {
+                              "Enum": [
+                                "feed",
+                                "index"
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      [
+                        "id",
+                        "Int4"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "09e67488efa84f5fca482221bbf76c06a9d90f129bcff6b6a5e7ea8eb5becba5"
+}

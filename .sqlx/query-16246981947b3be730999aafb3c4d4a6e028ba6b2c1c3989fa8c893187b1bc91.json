@@ -1,0 +1,133 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT \"id\", \"guid\", \"feed_id\", \"index_in_feed\", \"title\", \"link\", \"description\", \"enclosure\" AS \"enclosure!: Option < FeedItemEnclosure >\", \"categories\", \"comments_link\", \"published_at\", \"content\", \"content_type\", \"base_link\", \"created_at\", \"updated_at\" FROM \"feed_item\" ORDER BY \"id\" DESC LIMIT $1 OFFSET $2 ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "guid",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "feed_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "index_in_feed",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "link",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "enclosure!: Option < FeedItemEnclosure >",
+        "type_info": {
+          "Custom": {
+            "name": "feed_item_enclosure",
+            "kind": {
+              "Composite": [
+                [
+                  "link",
+                  "Text"
+                ],
+                [
+                  "mime",
+                  "Text"
+                ],
+                [
+                  "length",
+                  "Int4"
+                ]
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "categories",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 9,
+        "name": "comments_link",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "published_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 11,
+        "name": "content",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "content_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "base_link",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "16246981947b3be730999aafb3c4d4a6e028ba6b2c1c3989fa8c893187b1bc91"
+}

@@ -1,0 +1,63 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT \"id\", \"client\" AS \"client!: OAuthRedirectClient\", \"provider\", \"csrf_token\", \"pkce_verifier\", \"created_at\" FROM \"user_oauth_state\" WHERE \"csrf_token\" = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "client!: OAuthRedirectClient",
+        "type_info": {
+          "Custom": {
+            "name": "user_oauth_client",
+            "kind": {
+              "Enum": [
+                "web",
+                "android",
+                "ios"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "provider",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "csrf_token",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "pkce_verifier",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "bc492e3d8d01237bb9ae0ce707c8c836332257af62f9b7920767c7cf388e4146"
+}

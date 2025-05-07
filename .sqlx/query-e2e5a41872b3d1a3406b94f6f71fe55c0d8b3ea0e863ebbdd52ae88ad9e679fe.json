@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO \"user_oauth_state\" (\"client\", \"provider\", \"csrf_token\", \"pkce_verifier\") VALUES ($1, $2, $3, $4) RETURNING \"id\", \"created_at\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "user_oauth_client",
+            "kind": {
+              "Enum": [
+                "web",
+                "android",
+                "ios"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "e2e5a41872b3d1a3406b94f6f71fe55c0d8b3ea0e863ebbdd52ae88ad9e679fe"
+}

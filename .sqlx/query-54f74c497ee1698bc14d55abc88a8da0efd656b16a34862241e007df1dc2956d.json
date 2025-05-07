@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"user_list\" SET \"owner\" = $1, \"title\" = $2, \"description\" = $3, \"icon\" = $4, \"created_at\" = $5, \"updated_at\" = $6 WHERE \"id\" = $7",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "icon",
+            "kind": {
+              "Composite": [
+                [
+                  "icon",
+                  "Text"
+                ],
+                [
+                  "hex_color",
+                  "Text"
+                ]
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "54f74c497ee1698bc14d55abc88a8da0efd656b16a34862241e007df1dc2956d"
+}

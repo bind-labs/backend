@@ -1,0 +1,59 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT \"id\", \"index\", \"owner\", \"list\", \"item\", \"created_at\", \"updated_at\" FROM \"user_list_item\" ORDER BY \"id\" DESC LIMIT $1 OFFSET $2 ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "index",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "owner",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "list",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "item",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "5904fa903e0cfbe2b24097942d64ee80aed502b687fddb7024a4ee0821e47189"
+}

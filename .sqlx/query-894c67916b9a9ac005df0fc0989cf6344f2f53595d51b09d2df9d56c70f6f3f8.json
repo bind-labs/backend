@@ -1,0 +1,87 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT \"id\", \"owner\", \"query\", \"sort\", \"title\", \"description\", \"icon\" AS \"icon!: Icon\", \"created_at\", \"updated_at\" FROM \"user_index\" ORDER BY \"id\" DESC LIMIT $1 OFFSET $2 ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "owner",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "query",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "sort",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "icon!: Icon",
+        "type_info": {
+          "Custom": {
+            "name": "icon",
+            "kind": {
+              "Composite": [
+                [
+                  "icon",
+                  "Text"
+                ],
+                [
+                  "hex_color",
+                  "Text"
+                ]
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "894c67916b9a9ac005df0fc0989cf6344f2f53595d51b09d2df9d56c70f6f3f8"
+}

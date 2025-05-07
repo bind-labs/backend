@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM \"user_list_item\" WHERE \"id\" = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b48a626a9ef2246e8ac90b15287005cb9f1c60d4f17382329a7dc6f46cea891c"
+}

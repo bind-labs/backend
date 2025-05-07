@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"feed\" SET \"status\" = $1, \"format\" = $2, \"link\" = $3, \"domain\" = $4, \"title\" = $5, \"description\" = $6, \"icon\" = $7, \"language\" = $8, \"skip_hours\" = $9, \"skip_days_of_week\" = $10, \"ttl_in_minutes\" = $11, \"etag\" = $12, \"created_at\" = $13, \"updated_at\" = $14, \"fetched_at\" = $15, \"successful_fetch_at\" = $16, \"next_fetch_at\" = $17 WHERE \"id\" = $18",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "feed_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "completed",
+                "suspended",
+                "broken"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "feed_format",
+            "kind": {
+              "Enum": [
+                "rss",
+                "atom",
+                "json"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Bpchar",
+        "Int4Array",
+        "Int4Array",
+        "Int4",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "006c265b45d81f8127fae707d84f386ba5b6bd27e8de0caad169fca407387b1e"
+}

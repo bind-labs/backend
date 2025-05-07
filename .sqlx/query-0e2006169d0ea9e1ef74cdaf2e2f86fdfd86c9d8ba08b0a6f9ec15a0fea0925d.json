@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"user_history_item\" SET \"updated_at\" = $1 WHERE \"id\" = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0e2006169d0ea9e1ef74cdaf2e2f86fdfd86c9d8ba08b0a6f9ec15a0fea0925d"
+}

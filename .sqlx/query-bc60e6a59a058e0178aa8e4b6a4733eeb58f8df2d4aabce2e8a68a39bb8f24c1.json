@@ -1,0 +1,61 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO \"feed\" (\"status\", \"format\", \"link\", \"domain\", \"title\", \"description\", \"icon\", \"language\", \"skip_hours\", \"skip_days_of_week\", \"ttl_in_minutes\", \"etag\", \"created_at\", \"updated_at\", \"fetched_at\", \"successful_fetch_at\", \"next_fetch_at\") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING \"id\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "feed_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "completed",
+                "suspended",
+                "broken"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "feed_format",
+            "kind": {
+              "Enum": [
+                "rss",
+                "atom",
+                "json"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Bpchar",
+        "Int4Array",
+        "Int4Array",
+        "Int4",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bc60e6a59a058e0178aa8e4b6a4733eeb58f8df2d4aabce2e8a68a39bb8f24c1"
+}

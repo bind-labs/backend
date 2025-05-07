@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"user_email_verification\" SET \"email\" = $1, \"code\" = $2, \"created_at\" = $3 WHERE \"id\" = $4",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fbcfb37f4a4b18e1225afff38dffa05e8c56ae2c4a8c20f66c2c928282c16493"
+}

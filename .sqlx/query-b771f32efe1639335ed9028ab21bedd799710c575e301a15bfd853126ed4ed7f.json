@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"user_oauth_state\" SET \"client\" = $1, \"provider\" = $2, \"csrf_token\" = $3, \"pkce_verifier\" = $4, \"created_at\" = $5 WHERE \"id\" = $6",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "user_oauth_client",
+            "kind": {
+              "Enum": [
+                "web",
+                "android",
+                "ios"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b771f32efe1639335ed9028ab21bedd799710c575e301a15bfd853126ed4ed7f"
+}

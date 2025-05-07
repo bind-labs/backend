@@ -1,0 +1,86 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT id, title, owner, children as \"children:Vec<TagChild>\",  created_at, updated_at FROM user_tag\n      ORDER BY updated_at DESC\n      LIMIT $1 OFFSET $2\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "owner",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "children:Vec<TagChild>",
+        "type_info": {
+          "Custom": {
+            "name": "tag_child[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "tag_child",
+                  "kind": {
+                    "Composite": [
+                      [
+                        "type",
+                        {
+                          "Custom": {
+                            "name": "tag_child_type",
+                            "kind": {
+                              "Enum": [
+                                "feed",
+                                "index"
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      [
+                        "id",
+                        "Int4"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f8c8dac0e664dea8c2400fd86dfb634064a186e8ae16cf225c178c1b545db773"
+}

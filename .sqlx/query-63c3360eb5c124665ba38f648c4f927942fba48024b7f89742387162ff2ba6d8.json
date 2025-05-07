@@ -1,0 +1,145 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                id,\n                status AS \"status: FeedStatus\",\n                format AS \"format: FeedFormat\",\n                link,\n                domain,\n\n                title,\n                description,\n                icon,\n                language,\n\n                skip_hours,\n                skip_days_of_week,\n                ttl_in_minutes,\n                etag,\n\n                created_at,\n                updated_at,\n                fetched_at,\n                successful_fetch_at,\n                next_fetch_at\n            FROM feed\n            WHERE next_fetch_at < NOW() AND status = 'active'",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "status: FeedStatus",
+        "type_info": {
+          "Custom": {
+            "name": "feed_status",
+            "kind": {
+              "Enum": [
+                "active",
+                "completed",
+                "suspended",
+                "broken"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "format: FeedFormat",
+        "type_info": {
+          "Custom": {
+            "name": "feed_format",
+            "kind": {
+              "Enum": [
+                "rss",
+                "atom",
+                "json"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "link",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "domain",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "icon",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "language",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "skip_hours",
+        "type_info": "Int4Array"
+      },
+      {
+        "ordinal": 10,
+        "name": "skip_days_of_week",
+        "type_info": "Int4Array"
+      },
+      {
+        "ordinal": 11,
+        "name": "ttl_in_minutes",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 12,
+        "name": "etag",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "fetched_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 16,
+        "name": "successful_fetch_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 17,
+        "name": "next_fetch_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "63c3360eb5c124665ba38f648c4f927942fba48024b7f89742387162ff2ba6d8"
+}

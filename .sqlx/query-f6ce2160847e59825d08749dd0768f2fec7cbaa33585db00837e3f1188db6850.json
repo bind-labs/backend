@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE \"user_tag\" SET \"owner\" = $1, \"title\" = $2, \"children\" = $3, \"created_at\" = $4, \"updated_at\" = $5 WHERE \"id\" = $6",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        {
+          "Custom": {
+            "name": "tag_child[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "tag_child",
+                  "kind": {
+                    "Composite": [
+                      [
+                        "type",
+                        {
+                          "Custom": {
+                            "name": "tag_child_type",
+                            "kind": {
+                              "Enum": [
+                                "feed",
+                                "index"
+                              ]
+                            }
+                          }
+                        }
+                      ],
+                      [
+                        "id",
+                        "Int4"
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "Timestamptz",
+        "Timestamptz",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f6ce2160847e59825d08749dd0768f2fec7cbaa33585db00837e3f1188db6850"
+}

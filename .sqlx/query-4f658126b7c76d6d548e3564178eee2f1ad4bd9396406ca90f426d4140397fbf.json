@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO \"user\" (\"email\", \"username\", \"providers\", \"password_hash\") VALUES ($1, $2, $3, $4) RETURNING \"id\", \"passwordless_pub_key\", \"created_at\", \"updated_at\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "passwordless_pub_key",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "TextArray",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4f658126b7c76d6d548e3564178eee2f1ad4bd9396406ca90f426d4140397fbf"
+}
