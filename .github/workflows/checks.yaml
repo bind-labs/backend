@@ -22,5 +22,5 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - run: sudo apt update && sudo apt install -y postgresql
+      - run: sudo apt update && sudo apt install -y postgresql postgresql-client
       - run: cargo test
