@@ -100,12 +100,10 @@ impl Modify for SecurityAddon {
             );
 
             // Add a description of how authentication works
-            openapi.info.description = Some(format!(
-                "## Authentication\n\nThis API uses JWT Bearer tokens for authentication. \
+            openapi.info.description = Some("## Authentication\n\nThis API uses JWT Bearer tokens for authentication. \
                 To authenticate, include an `Authorization: Bearer <token>` header in your requests. \
                 Tokens can be obtained from the login or OAuth endpoints and are valid for 7 days.\n\n\
-                Protected endpoints will return 401 Unauthorized if a valid token is not provided.",
-            ));
+                Protected endpoints will return 401 Unauthorized if a valid token is not provided.".to_string());
         }
     }
 }
