@@ -1,4 +1,8 @@
+# Build artifacts
 /target
 /macros/target
+
+# Secrets
 .env.local
 .env
+_secret.yaml

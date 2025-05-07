@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - api.yaml
+  - namespace.yaml
+  - postgres.yaml
+  - secret.yaml
+namespace: backend
+labels:
+  - pairs:
+      app.kubernetes.io/name: api
+    includeSelectors: true

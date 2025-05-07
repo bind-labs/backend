@@ -6,6 +6,9 @@ on:
     tags:
       - "v*"
 
+concurrency:
+  group: docker-${{ github.ref }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,24 +35,20 @@ jobs:
           password: ${{ github.token }}
 
       - name: Build Docker Image
-        run: |
-          echo "Building image"
-          docker load < $(nix build .#dockerImage --print-out-paths)
-
-          echo "Tagging image"
-          docker tag ghcr.io/bind-labs/backend:latest ghcr.io/bind-labs/backend:${{ github.sha }}
+        run: docker load < $(nix build .#dockerImage --print-out-paths)
 
       - name: Push Docker Image as SHA
         run: |
-          docker push ghcr.io/bind-labs/backend:${{ github.sha }}
+          docker tag ghcr.io/bind-labs/api:latest ghcr.io/bind-labs/api:${{ github.sha }}
+          docker push ghcr.io/bind-labs/api:${{ github.sha }}
 
       - name: Push Docker Image as Tag
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         run: |
-          docker tag ghcr.io/bind-labs/backend:latest ghcr.io/bind-labs/backend:${{ github.ref_name }}
-          docker push ghcr.io/bind-labs/backend:${{ github.ref_name }}
+          docker tag ghcr.io/bind-labs/api:latest ghcr.io/bind-labs/api:${{ github.ref_name }}
+          docker push ghcr.io/bind-labs/api:${{ github.ref_name }}
 
       - name: Push Docker Image as latest
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
-          docker push ghcr.io/bind-labs/backend:latest
+          docker push ghcr.io/bind-labs/api:latest
