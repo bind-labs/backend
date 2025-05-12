@@ -12,7 +12,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa_scalar::{Scalar, Servable as ScalarServable};
 
 use api::config::Config;
-use api::feed::daemon::Daemon;
+use api::feed::daemon::{Daemon, DaemonOptions};
 use api::http::{self, common::ApiContext};
 
 #[tokio::main]
@@ -54,7 +54,15 @@ async fn main() {
         .expect("Failed while running migrations");
 
     // Start the feed daemon
-    let daemon = Daemon::new(pool.clone(), 5);
+    let daemon = Daemon::new(
+        pool.clone(),
+        DaemonOptions {
+            concurrent_updates: 5,
+            lease_name: config.leader_election_lease_name,
+        },
+    )
+    .await
+    .expect("Failed to start feed daemon");
 
     // Create OAuth clients
     let mut oauth_clients = HashMap::new();

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api
+data:
+  BIND_HOST: "0.0.0.0:3000"
+  BIND_WEB_ORIGIN: https://bind.sh
+  BIND_ANDROID_ORIGIN: bind-app://
+  BIND_IOS_ORIGIN: bind-ios://
+
+  BIND_OAUTH__SUPER_FISH__CLIENT_ID: 2sPVglPSODvSqHQE60AJyHD2vQ1g0R9RAI2rRNqS
+  BIND_OAUTH__SUPER_FISH__AUTH_URL: https://auth.super.fish/application/o/authorize/
+  BIND_OAUTH__SUPER_FISH__TOKEN_URL: https://auth.super.fish/application/o/token/
+  BIND_OAUTH__SUPER_FISH__JWKS_URL: https://auth.super.fish/application/o/bind/jwks/
+  BIND_OAUTH__SUPER_FISH__SCOPES: email,profile
+
+  BIND_SMTP_FROM: noreply@bind.sh
+
+  BIND_LEADER_ELECTION_LEASE_NAME: api

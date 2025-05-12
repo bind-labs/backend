@@ -50,6 +50,11 @@ pub struct Config {
     pub smtp_uri: String,
     /// SMTP email that will be used as the sender
     pub smtp_from: String,
+
+    /// Name of the Lease resource to use for leader election in Kubernetes
+    /// When not set, leader election will be disabled
+    /// TODO: validate that it's a valid name for a kubernetes resource
+    pub leader_election_lease_name: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

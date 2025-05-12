@@ -8,10 +8,12 @@ mod fetch;
 mod http;
 mod update;
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 use apply::apply_feed_update;
 use chrono::Utc;
+use kube_leader_election::{LeaseLock, LeaseLockParams};
 use ormx::Insert;
+use rand::{distr::Alphanumeric, Rng};
 use sqlx::PgPool;
 use std::{sync::Arc, time::Duration};
 use tokio::{
@@ -28,25 +30,84 @@ use update::get_feed_update;
 
 use crate::sql::{Feed, InsertFeedItem};
 
+fn generate_random_name(len: usize) -> String {
+    rand::rng()
+        .sample_iter(&Alphanumeric)
+        .map(char::from)
+        .take(len)
+        .collect()
+}
+
+pub struct DaemonOptions {
+    pub concurrent_updates: usize,
+    pub lease_name: Option<String>,
+}
+
 pub struct Daemon {
     task: JoinHandle<()>,
     cancel_tx: oneshot::Sender<()>,
 }
 
 impl Daemon {
-    pub fn new(pool: PgPool, concurrent_updates: usize) -> Self {
+    pub async fn new(pool: PgPool, options: DaemonOptions) -> Result<Self> {
         let (cancel_tx, mut cancel_rx) = oneshot::channel();
 
+        // Leader lock
+        let leadership = if let Some(lease_name) = options.lease_name {
+            let client = kube::Client::try_default()
+                .await
+                .context("Failed to connect to Kubernetes")?;
+            let namespace = client.default_namespace().to_string();
+            Some(LeaseLock::new(
+                client,
+                &namespace,
+                LeaseLockParams {
+                    holder_id: format!("{}-{}", lease_name, generate_random_name(8)),
+                    lease_name,
+                    lease_ttl: Duration::from_secs(120),
+                },
+            ))
+        } else {
+            None
+        };
+
+        // TODO: handle the task failing
         let task = tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(60));
 
             loop {
                 tokio::select! {
-                    _ = &mut cancel_rx => break,
+                    // Cancelled, release lock and exit
+                    _ = &mut cancel_rx => {
+                        if let Some(leadership) = &leadership {
+                            if let Err(err) = leadership.step_down().await {
+                                tracing::error!("Error stepping down from leadership: {:?}", err);
+                            }
+                        }
+                        break
+                    },
+
+                    // Interval ticked, update if we have lock
                     _ = interval.tick() => {
+                        if let Some(leadership) = &leadership {
+                            match leadership.try_acquire_or_renew().await {
+                                Ok(lease) => {
+                                    if !lease.acquired_lease {
+                                        tracing::info!("Not the leader, skipping feed update");
+                                        continue;
+                                    }
+                                },
+                                Err(err) => {
+                                    // TODO: exit after X failures
+                                    tracing::error!("Failed while attempting to acquire lease: {:?}", err);
+                                    continue;
+                                }
+                            };
+                        }
+
                         tracing::info!("Running feed update");
                         // TODO: split up the updates into batches and check for cancel each time
-                        if let Err(err) = Daemon::update_outdated_feeds(&pool, concurrent_updates).await {
+                        if let Err(err) = Daemon::update_outdated_feeds(&pool, options.concurrent_updates).await {
                             tracing::error!("Error in update: {:?}", err);
                         }
                     }
@@ -54,7 +115,7 @@ impl Daemon {
             }
         });
 
-        Self { task, cancel_tx }
+        Ok(Self { task, cancel_tx })
     }
 
     /// Runs a single feed update with the provided concurrency limit by first fetching all
