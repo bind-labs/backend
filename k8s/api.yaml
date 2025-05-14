@@ -28,9 +28,9 @@ spec:
       containers:
         - name: api
           image: ghcr.io/bind-labs/api:latest
-          imagePullPolicy: Always
           ports:
-            - containerPort: 3000
+            - name: http
+              containerPort: 3000
           envFrom:
             - secretRef:
                 name: api
@@ -53,8 +53,9 @@ metadata:
     service.kubernetes.io/topology-mode: Auto
 spec:
   ports:
-    - port: 3000
-      targetPort: 3000
+    - name: http
+      port: 80
+      targetPort: http
 
 ---
 apiVersion: networking.k8s.io/v1
@@ -72,4 +73,4 @@ spec:
               service:
                 name: api
                 port:
-                  number: 3000
+                  name: http

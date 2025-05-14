@@ -1,6 +1,7 @@
 # Build artifacts
 /target
 /macros/target
+/result
 
 # Secrets
 .env.local

@@ -1,4 +1,4 @@
-name: Docker
+name: Deploy
 on:
   push:
     branches:
@@ -23,9 +23,10 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Cache Nix
-        uses: nix-community/cache-nix-action@v6
+        uses: cachix/cachix-action@v14
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          name: backend
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -52,3 +53,24 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
         run: |
           docker push ghcr.io/bind-labs/api:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set new image
+        run: kustomize edit set image ghcr.io/bind-labs/api:latest=ghcr.io/bind-labs/api:${{ github.sha }}
+        working-directory: k8s
+
+      - name: Deploy to Kubernetes
+        run: |
+          mkdir ~/.kube
+          echo -e "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+
+          kubectl apply -k k8s
+          kubectl rollout restart deployment api
+          kubectl rollout status deployment api --timeout=2m

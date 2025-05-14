@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
   - api.yaml
   - config.yaml
-  - namespace.yaml
   - postgres.yaml
   - secret.yaml
   - service-account.yaml
