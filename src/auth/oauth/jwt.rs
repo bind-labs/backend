@@ -98,7 +98,7 @@ impl ExternalJwtToken {
 
 #[cfg(test)]
 mod tests {
-    use crate::tests::TestContext;
+    use crate::tests::sql::TempDB;
 
     use super::*;
     use chrono::Utc;
@@ -171,7 +171,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_or_update_user() {
-        let pool = TestContext::new().await.pool;
+        let pool = TempDB::new().await;
 
         let claims = ExternalClaims {
             email: SafeEmail().fake(),
