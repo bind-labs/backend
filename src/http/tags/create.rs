@@ -22,7 +22,7 @@ pub struct CreateTagRequest {
     tag = "tags",
     request_body = CreateTagRequest,
     responses(
-        (status = 201, description = "Tag created successfully", body = UserTag, 
+        (status = 201, description = "Tag created successfully", body = UserTag,
          example = json!({
             "id": 123,
             "title": "Tech Blogs",
@@ -35,7 +35,7 @@ pub struct CreateTagRequest {
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn create_tag(

@@ -19,7 +19,7 @@ use crate::sql::Feed;
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn list_feeds(_: AuthUser, State(state): State<ApiContext>) -> Result<Json<Vec<Feed>>> {

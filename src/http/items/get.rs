@@ -17,7 +17,7 @@ use crate::sql::{FeedItem, FeedItemParsed, InsertFeedItemParsed};
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn get_item(
@@ -44,7 +44,7 @@ pub async fn get_item(
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn get_parsed(

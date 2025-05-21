@@ -13,7 +13,7 @@ use crate::sql::UserList;
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn list_lists(

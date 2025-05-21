@@ -9,7 +9,10 @@ pub mod tags;
 pub mod user;
 
 use common::ApiContext;
-use utoipa::OpenApi;
+use utoipa::{
+    openapi::security::{HttpAuthScheme, HttpBuilder},
+    OpenApi,
+};
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::auth::user::AuthUser;
@@ -95,8 +98,8 @@ impl Modify for SecurityAddon {
         if let Some(components) = openapi.components.as_mut() {
             // Add JWT Bearer authentication scheme
             components.add_security_scheme(
-                "Authorization Token",
-                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("Authorization"))),
+                "BearerAuth",
+                SecurityScheme::Http(HttpBuilder::new().scheme(HttpAuthScheme::Bearer).build()),
             );
 
             // Add a description of how authentication works

@@ -27,7 +27,7 @@ pub struct CreateIndexRequest {
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn create_index(

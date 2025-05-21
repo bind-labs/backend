@@ -29,7 +29,7 @@ pub struct SearchRequest {
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn search(

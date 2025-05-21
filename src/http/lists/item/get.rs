@@ -19,7 +19,7 @@ use crate::sql::UserListItem;
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn get_list_item(
@@ -55,7 +55,7 @@ pub async fn get_list_item(
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn get_list_items(

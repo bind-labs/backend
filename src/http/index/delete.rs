@@ -17,7 +17,7 @@ use crate::sql::UserIndex;
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn delete_index(

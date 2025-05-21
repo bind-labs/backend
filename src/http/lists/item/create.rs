@@ -13,7 +13,7 @@ pub struct CreateListItemRequest {
 /// Add an item to a list
 #[utoipa::path(
     post,
-    path = "/{list_id}/item", 
+    path = "/{list_id}/item",
     tag = "lists",
     params(
         ("list_id" = i32, Path, description = "List ID")
@@ -28,7 +28,7 @@ pub struct CreateListItemRequest {
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn create_list_item(

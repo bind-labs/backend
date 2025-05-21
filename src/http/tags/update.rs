@@ -32,7 +32,7 @@ pub struct ModifyTagRequest {
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn modify_tag(

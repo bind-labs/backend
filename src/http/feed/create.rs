@@ -32,7 +32,7 @@ pub struct CreateFeedRequest {
     tag = "feed",
     request_body = CreateFeedRequest,
     responses(
-        (status = 201, description = "Feed created successfully", body = Feed, 
+        (status = 201, description = "Feed created successfully", body = Feed,
          example = json!({
             "id": 123,
             "title": "Example Tech Blog",
@@ -46,7 +46,7 @@ pub struct CreateFeedRequest {
         (status = 500, description = "Internal server error - Feed parsing failed")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn create_feed(

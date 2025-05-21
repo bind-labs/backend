@@ -16,7 +16,7 @@ use crate::sql::HistoryItem;
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn delete_history_item(

@@ -15,7 +15,7 @@ use crate::sql::HistoryItem;
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn get_user_history(
@@ -57,7 +57,7 @@ pub async fn get_user_history(
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn get_user_history_item(

@@ -19,7 +19,7 @@ use crate::sql::{UserList, UserListItem};
         (status = 500, description = "Internal server error")
     ),
     security(
-        ("Authorization Token" = [])
+        ("BearerToken" = [])
     )
 )]
 pub async fn delete_list_item(
