@@ -101,7 +101,7 @@ impl UserEmailVerification {
 
     pub fn generate_code() -> String {
         let mut rng = rng();
-        (0..6)
+        (0..5)
             .map(|_| rng.random_range(0..=9).to_string())
             .collect()
     }
