@@ -107,6 +107,7 @@ impl Daemon {
 
                         tracing::info!("Running feed update");
                         // TODO: split up the updates into batches and check for cancel each time
+                        // TODO: exit after X failures
                         if let Err(err) = Daemon::update_outdated_feeds(&pool, options.concurrent_updates).await {
                             tracing::error!("Error in update: {:?}", err);
                         }

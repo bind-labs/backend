@@ -16,10 +16,7 @@ use utoipa::{
 use utoipa_axum::router::OpenApiRouter;
 
 use crate::auth::user::AuthUser;
-use utoipa::{
-    openapi::security::{SecurityScheme},
-    Modify,
-};
+use utoipa::{openapi::security::SecurityScheme, Modify};
 
 /// API Documentation for the Bind Feed Aggregator Backend.
 ///

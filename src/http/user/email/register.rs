@@ -46,6 +46,19 @@ pub async fn register(
         )));
     }
 
+    let password_estimate = zxcvbn::zxcvbn(&info.password, &[&info.username, &info.email]);
+    if password_estimate.score() <= 2 {
+        if let Some(feedback) = password_estimate.feedback() {
+            return Err(Error::BadRequest(format!(
+                "{}. {}",
+                feedback.warning().unwrap_or("Password is too weak"),
+                feedback.suggestions().join(", ")
+            )));
+        } else {
+            return Err(Error::BadRequest("Password is too weak".to_string()));
+        }
+    }
+
     // Check if user already exists
     if User::get_by_email(&state.pool, &info.email).await.is_ok() {
         return Err(Error::Conflict(format!(
