@@ -4,10 +4,10 @@ use utoipa_axum::routes;
 use crate::http::common::ApiContext;
 
 mod login;
-mod send_password_reset_code;
 mod register;
-mod verify;
 mod reset_password;
+mod send_password_reset_code;
+mod verify;
 
 pub fn router() -> OpenApiRouter<ApiContext> {
     OpenApiRouter::new()
@@ -16,5 +16,4 @@ pub fn router() -> OpenApiRouter<ApiContext> {
         .routes(routes!(verify::verify))
         .routes(routes!(send_password_reset_code::send_password_reset_code))
         .routes(routes!(reset_password::reset_password))
-
 }

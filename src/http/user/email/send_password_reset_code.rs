@@ -11,8 +11,8 @@ pub struct PasswordResetRequest {
     email: String,
 }
 
-/// Sends an email to the user with a verification code
-/// which must be used during registration
+/// Sends an email to the user with a password reset code
+/// which must be used during password reset
 #[utoipa::path(
     post,
     path = "/send-password-reset-code",
