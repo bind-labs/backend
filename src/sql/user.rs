@@ -17,6 +17,7 @@ pub struct User {
     pub username: String,
     #[ormx(by_ref)]
     pub providers: Vec<String>,
+    #[ormx(set)]
     pub password_hash: Option<String>,
     #[ormx(default, by_ref)]
     pub passwordless_pub_key: Vec<String>,
