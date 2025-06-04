@@ -1,8 +1,10 @@
 use axum::{
     http,
     response::{IntoResponse, Response},
+    Json,
 };
 use lettre::transport::smtp::Error as SmtpError;
+use serde_json::json;
 
 use crate::{feed::daemon::FeedCreationError, scraper::WebParserError};
 
@@ -51,7 +53,7 @@ pub enum Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
-        match self {
+        let (status, message) = match self {
             Error::ValidationError(_) => (http::StatusCode::BAD_REQUEST, format!("{}", self)),
             Error::Forbidden(msg) | Error::BadRequest(msg) | Error::Conflict(msg) => {
                 (http::StatusCode::FORBIDDEN, msg)
@@ -97,7 +99,8 @@ impl IntoResponse for Error {
                     "Internal server error".to_string(),
                 ),
             },
-        }
-        .into_response()
+        };
+
+        (status, Json(json!({ "message": message }))).into_response()
     }
 }
