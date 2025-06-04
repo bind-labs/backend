@@ -118,6 +118,13 @@ CREATE TABLE user_email_verification (
   code text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE user_password_reset_codes (
+  id serial PRIMARY KEY,
+  email text NOT NULL,
+  code text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT NOW()
+);
 CREATE INDEX user_email_verification_code ON user_email_verification (code);
 CREATE INDEX user_email_verification_created_at ON user_email_verification (created_at);
 

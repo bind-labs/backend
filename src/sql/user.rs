@@ -75,6 +75,13 @@ impl UserOAuthState {
     }
 }
 
+fn generate_code() -> String {
+    let mut rng = rng();
+    (0..5)
+        .map(|_| rng.random_range(0..=9).to_string())
+        .collect()
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
 #[ormx(table = "user_email_verification", id = id, insertable, deletable)]
 pub struct UserEmailVerification {
@@ -100,9 +107,35 @@ impl UserEmailVerification {
     }
 
     pub fn generate_code() -> String {
-        let mut rng = rng();
-        (0..5)
-            .map(|_| rng.random_range(0..=9).to_string())
-            .collect()
+        generate_code()
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, sqlx::FromRow, ormx::Table)]
+#[ormx(table = "user_password_reset_codes", id = id, insertable, deletable)]
+pub struct PasswordVerificationCode {
+    #[ormx(default)]
+    pub id: i32,
+    pub email: String,
+    #[ormx(get_one = get_by_code)]
+    pub code: String,
+    #[ormx(default)]
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl PasswordVerificationCode {
+    /// Deletes all expired password reset codes older than 1 hour
+    pub async fn cleanup_expired(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE FROM user_password_reset_codes WHERE created_at < $1"#,
+            chrono::Utc::now() - chrono::Duration::days(1)
+        )
+        .execute(pool)
+        .await?;
+        Ok(())
+    }
+
+    pub fn generate_code() -> String {
+        generate_code()
     }
 }

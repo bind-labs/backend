@@ -17,7 +17,7 @@ use utoipa_axum::router::OpenApiRouter;
 
 use crate::auth::user::AuthUser;
 use utoipa::{
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+    openapi::security::{SecurityScheme},
     Modify,
 };
 
